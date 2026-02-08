@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    container_name: dental_reviews_frontend
+    ports:
+      - "4173:4173"
+    restart: unless-stopped
