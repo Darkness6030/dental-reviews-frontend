@@ -1,6 +1,6 @@
-import { useNavigate, useOutletContext } from 'react-router-dom'
-import AIGenerateIcon from '../icons/ai_generate.svg?react'
-import type { Experience } from '../types'
+import { useNavigate, useOutletContext } from "react-router-dom"
+import AIGenerateIcon from "../icons/ai_generate.svg?react"
+import type { Experience } from "../types"
 
 export type Context = {
   experience: Experience
@@ -10,13 +10,13 @@ export type Context = {
 const EXPERIENCE_OPTIONS = [
   {
     value: true,
-    name: 'Есть претензия',
-    image_url: '/have_complaint.png'
+    name: "Есть претензия",
+    image_url: "/have_complaint.png"
   },
   {
     value: false,
-    name: 'Все отлично',
-    image_url: '/everything_fine.png'
+    name: "Все отлично",
+    image_url: "/everything_fine.png"
   }
 ]
 
@@ -50,8 +50,8 @@ export default function ExperiencePage() {
               className={`aspect-[178/220] w-full bg-white rounded-[48px]
                 flex flex-col items-center justify-between p-4
                 ${experience === option.value
-                  ? 'border-[4px] border-[#131927]'
-                  : 'border-[4px] border-transparent'
+                  ? "border-[4px] border-[#131927]"
+                  : "border-[4px] border-transparent"
                 }`}
             >
               <div className="flex-1 flex items-center justify-center w-full">
@@ -76,8 +76,8 @@ export default function ExperiencePage() {
           <button
             disabled={experience === null}
             onClick={() => {
-              if (experience === true) navigate('/complaint')
-              if (experience === false) navigate('/doctors')
+              if (experience === true) navigate("/complaint")
+              if (experience === false) navigate("/doctors")
             }}
             className="h-14 rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716]
                        text-white font-semibold text-[16px] tracking-[-0.02em]

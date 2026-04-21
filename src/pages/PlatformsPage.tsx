@@ -7,7 +7,7 @@ import CheckmarkIcon from "../icons/checkmark.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Platform } from "../types"
-import { addReviewPlatform, getPlatforms } from "../utils/api"
+import { addReviewPlatform, getPlatforms } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {
@@ -99,7 +99,7 @@ export default function PlatformsPage() {
             Спасибо за<br />уделенное время
           </h1>
 
-          <div className="w-16 h-16 p-[6px] flex items-center justify-center shrink-0">
+          <div className="w-16 h-16 p-[6px] flex items-center justify-center">
             <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
               <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
             </div>
@@ -137,13 +137,13 @@ export default function PlatformsPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 mt-8 flex-1 min-h-0">
-        <h2 className="text-[24px] leading-[110%] font-semibold tracking-[-0.02em] text-[#131927]">
+      <div className="w-full px-4 mt-6 flex-1 min-h-0">
+        <h2 className="text-[24px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
           Выберите где<br />опубликовать отзыв
         </h2>
 
         <p className="mt-3 text-[14px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
-          При нажатии на сервис вас переведет<br />на внешнюю ссылку
+          При нажатии на сервис, вас переведет<br />на внешнюю ссылку
         </p>
 
         <div className="my-6 flex flex-col gap-2">

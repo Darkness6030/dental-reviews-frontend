@@ -4,7 +4,7 @@ import { Loader } from "../components/Loader"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
 import type { User, Reason } from "../types"
-import { createComplaint, getOwner, getReasons } from "../utils/api"
+import { createComplaint, getOwner, getReasons } from "../api"
 import { formatPhone } from "../utils/phone"
 
 type Context = {
@@ -143,9 +143,9 @@ export default function ComplaintPage() {
         </div>
       </div>
 
-      <div className="w-full p-4 flex flex-col gap-8 flex-1">
+      <div className="w-full p-4 flex flex-col gap-6 flex-1">
         <div className="flex flex-col gap-3">
-          <h2 className="text-[18px] leading-[110%] font-semibold tracking-[-0.02em] text-[#131927]">
+          <h2 className="text-[18px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
             Укажите, что вам не понравилось?
           </h2>
 
@@ -183,7 +183,7 @@ export default function ComplaintPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <h2 className="text-[18px] leading-[110%] font-semibold tracking-[-0.02em] text-[#131927]">
+          <h2 className="text-[18px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
             Опишите пожалуйста подробнее
           </h2>
 
@@ -198,7 +198,7 @@ export default function ComplaintPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <h2 className="text-[18px] leading-[110%] font-semibold tracking-[-0.02em] text-[#131927]">
+          <h2 className="text-[18px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
             Введите имя и номер телефона, для обратной связи с вами
           </h2>
 

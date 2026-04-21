@@ -4,7 +4,7 @@ import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import type { Source } from "../types"
-import { getSources, setReviewSource } from "../utils/api"
+import { getSources, setReviewSource } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {
@@ -34,7 +34,7 @@ export default function SourcePage() {
       setIsSaving(true)
       const review = await loadReview()
       await setReviewSource(review.id, selectedSourceId)
-      navigate("/contact")
+      navigate("/review")
     } finally {
       setIsSaving(false)
     }

@@ -1,7 +1,7 @@
-import type { Review } from '../types'
-import { createReview, getReview } from './api'
+import type { Review } from "../types"
+import { createReview, getReview } from "../api"
 
-const reviewIdKey = 'review_id'
+const reviewIdKey = "review_id"
 
 export const loadReview = async (): Promise<Review> => {
   const reviewId = getReviewId()

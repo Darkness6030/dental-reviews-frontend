@@ -4,7 +4,7 @@ import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import type { Doctor } from "../types"
-import { getDoctors, setReviewDoctors } from "../utils/api"
+import { getDoctors, setReviewDoctors } from "../api"
 import { loadReview } from "../utils/storage"
 
 export type Context = {

@@ -4,7 +4,7 @@ import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import type { Aspect } from "../types"
-import { getAspects, setReviewAspects } from "../utils/api"
+import { getAspects, setReviewAspects } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {

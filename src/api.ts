@@ -1,9 +1,9 @@
 import axios from "axios"
 import qs from "qs"
-import type { Aspect, Doctor, Platform, Reason, Review, Reward, Service, Source, User } from "../types"
+import type { Aspect, Doctor, Platform, Reason, Review, Reward, Service, Source, User } from "./types"
 
 const client = axios.create({
-  baseURL: "https://feedback.ddaily.ru/api",
+  baseURL: import.meta.env.VITE_API_URL,
   headers: {
     "Content-Type": "application/json"
   }

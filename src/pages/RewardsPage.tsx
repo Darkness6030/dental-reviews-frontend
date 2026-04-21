@@ -6,7 +6,7 @@ import CheckmarkIcon from "../icons/checkmark.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Reward } from "../types"
-import { getRewards, setReviewReward } from "../utils/api"
+import { getRewards, setReviewReward } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {
@@ -41,14 +41,14 @@ export default function RewardsPage() {
   useEffect(() => {
     if (reviewText) return
 
-    const loadText = async () => {
+    const loadReviewText = async () => {
       const review = await loadReview()
       if (review.review_text) {
         setReviewText(review.review_text)
       }
     }
 
-    loadText()
+    loadReviewText()
   }, [])
 
   const handleCopyReview = async () => {
@@ -81,16 +81,14 @@ export default function RewardsPage() {
     }
   }, [])
 
-  const handleNext = async (rewardId: number | null) => {
+  const handleNext = async (rewardId: number) => {
     if (isSaving) return
 
     try {
       setIsSaving(true)
       const review = await loadReview()
-      if (rewardId !== null) {
-        await setReviewReward(review.id, rewardId)
-      }
-      navigate("/platforms")
+      await setReviewReward(review.id, rewardId)
+      navigate("/contacts")
     } finally {
       setIsSaving(false)
     }
@@ -104,7 +102,7 @@ export default function RewardsPage() {
             Отзыв<br />сгенерирован
           </h1>
 
-          <div className="w-16 h-16 p-[6px] flex items-center justify-center shrink-0">
+          <div className="w-16 h-16 p-[6px] flex items-center justify-center">
             <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
               <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
             </div>
@@ -142,8 +140,8 @@ export default function RewardsPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 mt-8 flex-1 min-h-0">
-        <h2 className="text-[24px] leading-[110%] font-semibold tracking-[-0.02em] text-[#131927]">
+      <div className="w-full px-4 mt-6 flex-1 min-h-0">
+        <h2 className="text-[24px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
           Выберите подарок<br />за публикацию отзыва
         </h2>
 
@@ -193,7 +191,7 @@ export default function RewardsPage() {
       <div className="w-full px-4 py-3 flex items-end justify-between shrink-0">
         <button
           disabled={isSaving}
-          onClick={() => handleNext(null)}
+          onClick={() => navigate("/contacts")}
           className="h-14 flex items-center text-[15px] tracking-[-0.02em] text-[#131927] disabled:opacity-30"
         >
           Продолжить без подарка
@@ -201,7 +199,7 @@ export default function RewardsPage() {
 
         <button
           disabled={isSaving || selectedRewardId === null}
-          onClick={() => handleNext(selectedRewardId)}
+          onClick={() => handleNext(selectedRewardId!)}
           className="h-14 px-6 rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716]
             shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)]
             text-[16px] font-semibold text-white flex items-center justify-center

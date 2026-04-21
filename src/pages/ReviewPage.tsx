@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
-import { Loader } from '../components/Loader'
-import AIGenerateIcon from '../icons/ai_generate.svg?react'
-import CancelIcon from '../icons/cancel.svg?react'
-import CheckmarkIcon from '../icons/checkmark.svg?react'
-import PencilIcon from '../icons/pencil.svg?react'
-import { generateReviewText, updateReviewText } from '../utils/api'
-import { loadReview } from '../utils/storage'
+import { useEffect, useRef, useState } from "react"
+import { useNavigate, useOutletContext } from "react-router-dom"
+import { Loader } from "../components/Loader"
+import AIGenerateIcon from "../icons/ai_generate.svg?react"
+import CancelIcon from "../icons/cancel.svg?react"
+import CheckmarkIcon from "../icons/checkmark.svg?react"
+import PencilIcon from "../icons/pencil.svg?react"
+import { generateReviewText, updateReviewText } from "../api"
+import { loadReview } from "../utils/storage"
 
 type Context = {
   reviewText: string
@@ -53,8 +53,8 @@ export default function ReviewPage() {
     }
 
     handleScroll()
-    element.addEventListener('scroll', handleScroll)
-    return () => element.removeEventListener('scroll', handleScroll)
+    element.addEventListener("scroll", handleScroll)
+    return () => element.removeEventListener("scroll", handleScroll)
   }, [isLoading, isEditing])
 
   const handleGenerate = async () => {
@@ -64,8 +64,8 @@ export default function ReviewPage() {
     try {
       const review = await loadReview()
       const generated = await generateReviewText(review.id)
-      setReviewText(generated.review_text ?? '')
-      setDraftText(generated.review_text ?? '')
+      setReviewText(generated.review_text ?? "")
+      setDraftText(generated.review_text ?? "")
     } finally {
       setIsLoading(false)
     }
@@ -101,7 +101,7 @@ export default function ReviewPage() {
             (isLoading ? (
               <Loader />
             ) : (
-              <div className="w-16 h-16 p-[6px] flex items-center justify-center shrink-0">
+              <div className="w-16 h-16 p-[6px] flex items-center justify-center">
                 <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
                   <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
                 </div>
@@ -111,10 +111,10 @@ export default function ReviewPage() {
 
         <p className="text-[14px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
           {isEditing
-            ? 'Вы можете изменить текст отзыва'
+            ? "Вы можете изменить текст отзыва"
             : isLoading
-              ? 'Чтобы он был интересным и информативным'
-              : 'Но при желании вы можете его изменить'}
+              ? "Чтобы он был интересным и информативным"
+              : "Но при желании вы можете его изменить"}
         </p>
       </div>
 
@@ -122,7 +122,7 @@ export default function ReviewPage() {
         <div
           className={`relative w-full flex flex-col flex-1 rounded-[24px] bg-white p-6
           shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
-          ${isLoading ? 'mb-6' : 'overflow-hidden'}`}
+          ${isLoading ? "mb-6" : "overflow-hidden"}`}
         >
           {isLoading ? (
             <div className="flex flex-1 items-center justify-center">
@@ -131,7 +131,7 @@ export default function ReviewPage() {
                   <div
                     key={index}
                     className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8]
-                      ${index % 2 ? 'w-[150px]' : ''}`}
+                      ${index % 2 ? "w-[150px]" : ""}`}
                   />
                 ))}
               </div>
@@ -187,7 +187,7 @@ export default function ReviewPage() {
               </button>
 
               <button
-                onClick={() => navigate('/rewards')}
+                onClick={() => navigate("/rewards")}
                 className="h-14 px-6 rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716]
                   text-[16px] font-semibold text-white"
               >
@@ -216,7 +216,7 @@ export default function ReviewPage() {
                 {isSaving ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  'Сохранить'
+                  "Сохранить"
                 )}
               </button>
             </>
