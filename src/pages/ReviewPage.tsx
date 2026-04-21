@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { generateReviewText, updateReviewText } from "../api"
 import { Loader } from "../components/Loader"
 import AIGenerateIcon from "../icons/ai_generate.svg?react"
 import CancelIcon from "../icons/cancel.svg?react"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
-import { generateReviewText, updateReviewText } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {
@@ -32,10 +32,21 @@ export default function ReviewPage() {
 
   const [atTop, setAtTop] = useState(true)
   const [atBottom, setAtBottom] = useState(false)
+  const [generationsLeft, setGenerationsLeft] = useState<number>(0)
 
   useEffect(() => {
-    if (!reviewText) handleGenerate()
-    else setIsLoading(false)
+    const loadReviewData = async () => {
+      const review = await loadReview()
+      setGenerationsLeft(review.generations_left)
+
+      if (!reviewText) {
+        handleGenerate()
+      } else {
+        setIsLoading(false)
+      }
+    }
+
+    loadReviewData()
   }, [])
 
   useEffect(() => {
@@ -54,6 +65,9 @@ export default function ReviewPage() {
   }, [isLoading, isEditing])
 
   const handleGenerate = async () => {
+    if (!generationsLeft)
+      return
+
     setIsLoading(true)
     setIsEditing(false)
 
@@ -172,9 +186,15 @@ export default function ReviewPage() {
         <div className="flex w-full items-center justify-between px-4 py-3 shrink-0">
           {!isEditing ? (
             <>
-              <button onClick={handleGenerate} className="flex items-center gap-2">
+              <button
+                onClick={handleGenerate}
+                disabled={!generationsLeft}
+                className={`flex items-center gap-2 ${!generationsLeft ? "opacity-20" : ""}`}
+              >
                 <AIGenerateIcon className="w-5 h-5 text-[#131927]" />
-                <span className="text-[15px]">Сгенерировать ещё</span>
+                <span className="text-[15px]">
+                  Сгенерировать ещё ({generationsLeft}/3)
+                </span>
               </button>
 
               <button

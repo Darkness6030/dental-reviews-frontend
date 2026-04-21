@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { setReviewContacts } from "../api"
+import CopiedToast from "../components/CopiedToast"
+import { Loader } from "../components/Loader"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
-import PencilIcon from "../icons/pencil.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
+import PencilIcon from "../icons/pencil.svg?react"
 import type { Reward } from "../types"
 import { formatPhone } from "../utils/phone"
 import { loadReview } from "../utils/storage"
-import { setReviewContacts } from "../api"
-import { Loader } from "../components/Loader"
-import CopiedToast from "../components/CopiedToast"
 
 type Context = {
   contactName: string

@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { getServicesByDoctorIds, setReviewServices } from "../api"
 import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import type { Service } from "../types"
-import { getServicesByDoctorIds, setReviewServices } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {

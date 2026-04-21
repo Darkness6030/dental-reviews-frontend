@@ -1,12 +1,22 @@
 import axios from "axios"
 import qs from "qs"
-import type { Aspect, Doctor, Platform, Reason, Review, Reward, Service, Source, User } from "./types"
+import type {
+  Aspect,
+  Doctor,
+  Platform,
+  Reason,
+  Review,
+  Reward,
+  Service,
+  Source,
+  User,
+} from "./types"
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
-    "Content-Type": "application/json"
-  }
+    "Content-Type": "application/json",
+  },
 })
 
 export const getDoctors = async (): Promise<Doctor[]> => {
@@ -24,7 +34,7 @@ export const getServicesByDoctorIds = async (
 ): Promise<Service[]> => {
   const { data } = await client.get("/services/doctors", {
     params: { doctor_ids: doctorIds },
-    paramsSerializer: params => qs.stringify(params, { arrayFormat: "repeat" })
+    paramsSerializer: params => qs.stringify(params, { arrayFormat: "repeat" }),
   })
 
   return data
@@ -110,21 +120,19 @@ export const setReviewSource = async (
   return data
 }
 
-export const setReviewContacts = async (
+export const updateReviewExperience = async (
   reviewId: number,
-  contactName?: string,
-  contactPhone?: string
+  experienceText: string
 ): Promise<Review> => {
-  const { data } = await client.post(`/reviews/${reviewId}/contacts`, {
-    contact_name: contactName,
-    contact_phone: contactPhone,
+  const { data } = await client.post(`/reviews/${reviewId}/experience`, {
+    experience_text: experienceText,
   })
   return data
 }
 
 export const updateReviewText = async (
   reviewId: number,
-  reviewText?: string
+  reviewText: string
 ): Promise<Review> => {
   const { data } = await client.post(`/reviews/${reviewId}/text`, {
     review_text: reviewText,
@@ -132,9 +140,7 @@ export const updateReviewText = async (
   return data
 }
 
-export const generateReviewText = async (
-  reviewId: number
-): Promise<Review> => {
+export const generateReviewText = async (reviewId: number): Promise<Review> => {
   const { data } = await client.post(`/reviews/${reviewId}/generate`)
   return data
 }
@@ -145,6 +151,18 @@ export const setReviewReward = async (
 ): Promise<Review> => {
   const { data } = await client.post(`/reviews/${reviewId}/reward`, {
     reward_id: rewardId,
+  })
+  return data
+}
+
+export const setReviewContacts = async (
+  reviewId: number,
+  contactName?: string,
+  contactPhone?: string
+): Promise<Review> => {
+  const { data } = await client.post(`/reviews/${reviewId}/contacts`, {
+    contact_name: contactName,
+    contact_phone: contactPhone,
   })
   return data
 }

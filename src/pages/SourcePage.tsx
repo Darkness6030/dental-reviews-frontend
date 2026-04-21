@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { getSources, setReviewSource } from "../api"
 import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import type { Source } from "../types"
-import { getSources, setReviewSource } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {
@@ -34,7 +34,7 @@ export default function SourcePage() {
     try {
       const review = await loadReview()
       await setReviewSource(review.id, selectedSourceId)
-      navigate("/review")
+      navigate("/experience")
     } finally {
       setIsSaving(false)
     }
@@ -42,7 +42,7 @@ export default function SourcePage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
-      <div className="flex w-full max-w-[393px] flex-col gap-3 px-4 pt-4">
+      <div className="flex w-full flex-col gap-3 px-4 pt-4">
         <div className="flex items-start gap-3">
           <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
             Откуда вы<br />о нас узнали
@@ -56,7 +56,7 @@ export default function SourcePage() {
         </div>
       </div>
 
-      <div className="mt-4 w-full max-w-[393px] flex-1 overflow-y-auto px-4">
+      <div className="mt-4 w-full flex-1 overflow-y-auto px-4">
         <div className="flex flex-col gap-2 drop-shadow-[0_0_4px_rgba(0,0,0,0.04)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]">
           {isLoading ? (
             <div className="flex min-h-[120px] w-full items-center justify-center">
@@ -84,7 +84,7 @@ export default function SourcePage() {
         </div>
       </div>
 
-      <div className="sticky bottom-0 flex w-full max-w-[393px] items-center justify-between bg-[#F5F5F5] px-4 py-3">
+      <div className="sticky bottom-0 flex w-full items-center justify-between bg-[#F5F5F5] px-4 py-3">
         <button
           onClick={() => navigate(-1)}
           className="flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"

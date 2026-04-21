@@ -56,13 +56,15 @@ export type Reason = {
 
 export type Review = {
     id: number
-    contact_name?: string | null
-    contact_phone?: string | null
-    review_text?: string | null
+    contact_name?: string
+    contact_phone?: string
+    experience_text?: string
+    review_text?: string
+    generations_left: number
     selected_doctors: Doctor[]
     selected_services: Service[]
     selected_aspects: Aspect[]
-    selected_source?: Source | null
-    selected_reward?: Reward | null
+    selected_source?: Source
+    selected_reward?: Reward
     published_platforms: Platform[]
 }

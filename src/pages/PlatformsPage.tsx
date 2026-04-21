@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { addReviewPlatform, getPlatforms } from "../api"
 import CopiedToast from "../components/CopiedToast"
 import { Loader } from "../components/Loader"
 import ArrowRightIcon from "../icons/arrow_right.svg?react"
@@ -7,19 +8,23 @@ import CheckmarkIcon from "../icons/checkmark.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Platform } from "../types"
-import { addReviewPlatform, getPlatforms } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {
   reviewText: string
   setReviewText: (text: string) => void
+  contactName: string
 }
 
 export default function PlatformsPage() {
   const navigate = useNavigate()
   const copyTimeoutRef = useRef<number | null>(null)
 
-  const { reviewText, setReviewText } = useOutletContext<Context>()
+  const {
+    reviewText,
+    setReviewText,
+    contactName
+  } = useOutletContext<Context>()
 
   const [platforms, setPlatforms] = useState<Platform[]>([])
   const [isCopied, setIsCopied] = useState(false)
@@ -92,7 +97,11 @@ export default function PlatformsPage() {
       <div className="flex w-full flex-col gap-3 px-4 pt-4 shrink-0">
         <div className="flex w-full items-start gap-3">
           <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
-            Спасибо за<br />уделенное время
+            {contactName ? (
+              <>{contactName},<br />спасибо за<br />уделенное время!</>
+            ) : (
+              <>Спасибо за<br />уделенное время</>
+            )}
           </h1>
 
           <div className="flex w-16 h-16 items-center justify-center p-[6px]">

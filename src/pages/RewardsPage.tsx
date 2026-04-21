@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { getRewards, setReviewReward } from "../api"
 import CopiedToast from "../components/CopiedToast"
 import { Loader } from "../components/Loader"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Reward } from "../types"
-import { getRewards, setReviewReward } from "../api"
 import { loadReview } from "../utils/storage"
 
 type Context = {
@@ -192,7 +192,7 @@ export default function RewardsPage() {
       <div className="flex w-full items-end justify-between px-4 py-3 shrink-0">
         <button
           disabled={isSaving}
-          onClick={() => navigate("/contacts")}
+          onClick={() => navigate("/platforms")}
           className="flex h-14 items-center text-[15px] tracking-[-0.02em] text-[#131927] disabled:opacity-30"
         >
           Продолжить без подарка

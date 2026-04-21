@@ -13,6 +13,7 @@ export default function App() {
   const [contactName, setContactName] = useState("")
   const [contactPhone, setContactPhone] = useState("")
   const [complaintText, setComplaintText] = useState("")
+  const [experienceText, setExperienceText] = useState("")
   const [reviewText, setReviewText] = useState("")
   const [draftText, setDraftText] = useState("")
 
@@ -41,6 +42,8 @@ export default function App() {
             setContactPhone,
             complaintText,
             setComplaintText,
+            experienceText,
+            setExperienceText,
             reviewText,
             setReviewText,
             draftText,
