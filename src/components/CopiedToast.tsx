@@ -1,4 +1,4 @@
-import CheckmarkIcon from '../icons/checkmark.svg?react'
+import CheckmarkIcon from "../icons/checkmark.svg?react"
 
 type CopiedToastProps = {
   onClose: () => void

@@ -70,6 +70,7 @@ export default function RewardsPage() {
       clearTimeout(copyTimeoutRef.current)
       copyTimeoutRef.current = null
     }
+
     setIsCopied(false)
   }
 
@@ -83,9 +84,9 @@ export default function RewardsPage() {
 
   const handleNext = async (rewardId: number) => {
     if (isSaving) return
+    setIsSaving(true)
 
     try {
-      setIsSaving(true)
       const review = await loadReview()
       await setReviewReward(review.id, rewardId)
       navigate("/contacts")
@@ -95,16 +96,16 @@ export default function RewardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center">
-      <div className="w-full px-4 pt-4 flex flex-col gap-3 shrink-0">
+    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+      <div className="flex w-full flex-col gap-3 px-4 pt-4 shrink-0">
         <div className="flex items-start gap-3">
-          <h1 className="flex-1 text-[36px] leading-[90%] font-semibold tracking-[-0.02em] text-[#131927]">
+          <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
             Отзыв<br />сгенерирован
           </h1>
 
-          <div className="w-16 h-16 p-[6px] flex items-center justify-center">
-            <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
-              <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
+          <div className="flex w-16 h-16 items-center justify-center p-[6px]">
+            <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#DAE6DA]">
+              <CheckmarkIcon className="h-8 w-8 text-[#298A2C]" />
             </div>
           </div>
         </div>
@@ -114,25 +115,25 @@ export default function RewardsPage() {
         </p>
       </div>
 
-      <div className="w-full px-4 mt-4 shrink-0">
-        <div className="bg-white rounded-[24px] p-1 flex gap-2 shadow-[0_0_4px_rgba(0,0,0,0.04)]">
-          <div className="flex-1 px-3 py-2 overflow-hidden">
-            <p className="text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] line-clamp-4 opacity-80">
+      <div className="mt-4 w-full px-4 shrink-0">
+        <div className="flex gap-2 rounded-[24px] bg-white p-1 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
+          <div className="flex-1 overflow-hidden px-3 py-2">
+            <p className="line-clamp-4 text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] opacity-80">
               {reviewText}
             </p>
           </div>
 
-          <div className="flex flex-col w-12 shrink-0">
+          <div className="flex w-12 flex-col shrink-0">
             <button
               onClick={() => navigate("/review")}
-              className="w-12 h-12 bg-[#EEEEEE] flex items-center justify-center rounded-t-[20px] border-b border-white"
+              className="flex w-12 h-12 items-center justify-center rounded-t-[20px] border-b border-white bg-[#EEEEEE]"
             >
               <PencilIcon className="w-[18px] h-[18px]" />
             </button>
 
             <button
               onClick={handleCopyReview}
-              className="w-12 h-12 bg-[#EEEEEE] flex items-center justify-center rounded-b-[20px]"
+              className="flex w-12 h-12 items-center justify-center rounded-b-[20px] bg-[#EEEEEE]"
             >
               <CopyIcon className="w-[18px] h-[18px]" />
             </button>
@@ -140,8 +141,8 @@ export default function RewardsPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 mt-6 flex-1 min-h-0">
-        <h2 className="text-[24px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
+      <div className="mt-6 flex w-full flex-1 min-h-0 flex-col px-4">
+        <h2 className="text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
           Выберите подарок<br />за публикацию отзыва
         </h2>
 
@@ -153,46 +154,46 @@ export default function RewardsPage() {
 
         <div className="mt-6 flex flex-col gap-2">
           {isLoading ? (
-            <div className="w-full min-h-[120px] flex items-center justify-center">
+            <div className="flex min-h-[120px] w-full items-center justify-center">
               <Loader />
             </div>
           ) : (
-            rewards.filter(reward => reward.is_enabled).map(reward => {
-              const isSelected = selectedRewardId === reward.id
-              return (
-                <button
-                  key={reward.id}
-                  onClick={() => setSelectedRewardId(reward.id)}
-                  className={`w-full min-h-[72px] p-1 rounded-[24px] flex items-center gap-3
-                    shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
-                    ${isSelected
-                      ? "bg-[#131927] text-white"
-                      : "bg-white text-[#191919]"
-                    }`}
-                >
-                  <div className="w-16 aspect-square rounded-[20px] bg-[#F2F2F2] overflow-hidden flex items-center justify-center shrink-0">
-                    <img
-                      src={reward.image_url ?? "/placeholder.png"}
-                      alt={reward.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+            rewards
+              .filter(reward => reward.is_enabled)
+              .map(reward => {
+                const isSelected = selectedRewardId === reward.id
 
-                  <span className="text-[15px] leading-[120%] tracking-[-0.02em] text-left font-medium">
-                    {reward.name}
-                  </span>
-                </button>
-              )
-            })
+                return (
+                  <button
+                    key={reward.id}
+                    onClick={() => setSelectedRewardId(reward.id)}
+                    className={`flex min-h-[72px] w-full items-center gap-3 rounded-[24px] p-1 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${
+                      isSelected ? "bg-[#131927] text-white" : "bg-white text-[#191919]"
+                    }`}
+                  >
+                    <div className="flex w-16 h-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-[#F2F2F2]">
+                      <img
+                        src={reward.image_url ?? "/placeholder.png"}
+                        alt={reward.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <span className="text-left text-[15px] font-medium leading-[120%] tracking-[-0.02em]">
+                      {reward.name}
+                    </span>
+                  </button>
+                )
+              })
           )}
         </div>
       </div>
 
-      <div className="w-full px-4 py-3 flex items-end justify-between shrink-0">
+      <div className="flex w-full items-end justify-between px-4 py-3 shrink-0">
         <button
           disabled={isSaving}
           onClick={() => navigate("/contacts")}
-          className="h-14 flex items-center text-[15px] tracking-[-0.02em] text-[#131927] disabled:opacity-30"
+          className="flex h-14 items-center text-[15px] tracking-[-0.02em] text-[#131927] disabled:opacity-30"
         >
           Продолжить без подарка
         </button>
@@ -200,13 +201,10 @@ export default function RewardsPage() {
         <button
           disabled={isSaving || selectedRewardId === null}
           onClick={() => handleNext(selectedRewardId!)}
-          className="h-14 px-6 rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716]
-            shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)]
-            text-[16px] font-semibold text-white flex items-center justify-center
-            disabled:opacity-30"
+          className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)] disabled:opacity-30"
         >
           {isSaving ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             "Далее"
           )}

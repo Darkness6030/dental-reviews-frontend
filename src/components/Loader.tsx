@@ -21,7 +21,7 @@ export function Loader() {
         height={svgSize}
         viewBox={`0 0 ${svgSize} ${svgSize}`}
         className="animate-spin"
-        style={{ animationDuration: '1s' }}
+        style={{ animationDuration: "1s" }}
       >
         <circle
           cx={center}

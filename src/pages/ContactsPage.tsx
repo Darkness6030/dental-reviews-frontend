@@ -38,8 +38,7 @@ export default function ContactsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isCopied, setIsCopied] = useState(false)
 
-  const isPhoneCompleted =
-    /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
+  const isPhoneCompleted = /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
 
   useEffect(() => {
     if (reviewText && selectedReward) return
@@ -50,6 +49,7 @@ export default function ContactsPage() {
         if (review.review_text) {
           setReviewText(review.review_text)
         }
+
         setSelectedReward(review.selected_reward ?? null)
       } finally {
         setIsLoading(false)
@@ -78,6 +78,7 @@ export default function ContactsPage() {
       clearTimeout(copyTimeoutRef.current)
       copyTimeoutRef.current = null
     }
+
     setIsCopied(false)
   }
 
@@ -91,9 +92,9 @@ export default function ContactsPage() {
 
   const handleNext = async () => {
     if (isSaving || !isPhoneCompleted) return
+    setIsSaving(true)
 
     try {
-      setIsSaving(true)
       const review = await loadReview()
       await setReviewContacts(review.id, contactName, contactPhone)
       navigate("/platforms")
@@ -103,16 +104,16 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center">
-      <div className="w-full px-4 pt-4 flex flex-col gap-3 shrink-0">
-        <div className="flex flex-row items-start gap-3 w-full">
-          <h1 className="flex-1 text-[36px] leading-[90%] font-semibold tracking-[-0.02em] text-[#131927]">
+    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+      <div className="flex w-full flex-col gap-3 px-4 pt-4 shrink-0">
+        <div className="flex w-full items-start gap-3">
+          <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
             Отзыв<br />сгенерирован
           </h1>
 
-          <div className="w-16 h-16 p-[6px] flex items-center justify-center">
-            <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
-              <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
+          <div className="flex w-16 h-16 items-center justify-center p-[6px]">
+            <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#DAE6DA]">
+              <CheckmarkIcon className="h-8 w-8 text-[#298A2C]" />
             </div>
           </div>
         </div>
@@ -122,25 +123,25 @@ export default function ContactsPage() {
         </p>
       </div>
 
-      <div className="w-full px-4 mt-4 shrink-0">
-        <div className="bg-white rounded-[24px] p-1 flex gap-2 shadow-[0_0_4px_rgba(0,0,0,0.04)]">
-          <div className="flex-1 px-3 py-2 overflow-hidden">
-            <p className="text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] line-clamp-4 opacity-80">
+      <div className="mt-4 w-full px-4 shrink-0">
+        <div className="flex gap-2 rounded-[24px] bg-white p-1 shadow-[0_0_4px_rgba(0,0,0,0.04)]">
+          <div className="flex-1 overflow-hidden px-3 py-2">
+            <p className="line-clamp-4 text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] opacity-80">
               {reviewText}
             </p>
           </div>
 
-          <div className="flex flex-col w-12 shrink-0">
+          <div className="flex w-12 flex-col shrink-0">
             <button
               onClick={() => navigate("/review")}
-              className="w-12 h-12 bg-[#EEEEEE] flex items-center justify-center rounded-t-[20px] border-b border-white"
+              className="flex w-12 h-12 items-center justify-center rounded-t-[20px] border-b border-white bg-[#EEEEEE]"
             >
               <PencilIcon className="w-[18px] h-[18px]" />
             </button>
 
             <button
               onClick={handleCopyReview}
-              className="w-12 h-12 bg-[#EEEEEE] flex items-center justify-center rounded-b-[20px]"
+              className="flex w-12 h-12 items-center justify-center rounded-b-[20px] bg-[#EEEEEE]"
             >
               <CopyIcon className="w-[18px] h-[18px]" />
             </button>
@@ -148,36 +149,36 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col">
-        <div className="flex flex-col px-4 mt-6 gap-2 w-full">
-          <h2 className="text-[24px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
+      <div className="flex flex-1 flex-col">
+        <div className="mt-6 flex w-full flex-col gap-2 px-4">
+          <h2 className="text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
             Вы выбрали
           </h2>
 
           {isLoading ? (
-            <div className="w-full min-h-[72px] flex items-center justify-center">
+            <div className="flex min-h-[72px] w-full items-center justify-center">
               <Loader />
             </div>
-          ) : selectedReward && (
-            <div className="w-full min-h-[72px] p-1 rounded-[24px] flex items-center gap-3 bg-[#131927] text-white
-              shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]"
-            >
-              <div className="w-16 aspect-square rounded-[20px] bg-[#F2F2F2] overflow-hidden flex items-center justify-center shrink-0">
-                <img
-                  src={selectedReward.image_url ?? "/placeholder.png"}
-                  alt={selectedReward.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+          ) : (
+            selectedReward && (
+              <div className="flex min-h-[72px] w-full items-center gap-3 rounded-[24px] bg-[#131927] p-1 text-white shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
+                <div className="flex w-16 h-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-[#F2F2F2]">
+                  <img
+                    src={selectedReward.image_url ?? "/placeholder.png"}
+                    alt={selectedReward.name}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-              <span className="text-[15px] leading-[120%] tracking-[-0.02em] text-left font-medium">
-                {selectedReward.name}
-              </span>
-            </div>
+                <span className="text-left text-[15px] font-medium leading-[120%] tracking-[-0.02em]">
+                  {selectedReward.name}
+                </span>
+              </div>
+            )
           )}
         </div>
 
-        <div className="flex flex-col px-4 mt-6 gap-4 w-full">
+        <div className="mt-6 flex w-full flex-col gap-4 px-4">
           <div className="flex flex-col gap-3">
             <h2 className="text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
               Закрепите подарок за собой
@@ -189,8 +190,8 @@ export default function ContactsPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="flex items-center bg-white rounded-[24px] p-1 w-full h-[70px]">
-              <div className="flex flex-col justify-center w-full px-3">
+            <div className="flex h-[70px] w-full items-center rounded-[24px] bg-white p-1">
+              <div className="flex w-full flex-col justify-center px-3">
                 {isEditingName ? (
                   <input
                     autoFocus
@@ -209,13 +210,14 @@ export default function ContactsPage() {
                       }
                     }}
                     placeholder="Ваше имя"
-                    className="w-full text-[30px] leading-[36px] outline-none bg-transparent text-[#131927] placeholder:text-[#131927]/30 tracking-[-0.02em]"
+                    className="w-full bg-transparent text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927] outline-none placeholder:text-[#131927]/30"
                   />
                 ) : (
                   <div className="flex items-center justify-between">
-                    <span className="text-[30px] leading-[36px] text-[#131927] tracking-[-0.02em]">
+                    <span className="text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927]">
                       {contactName}
                     </span>
+
                     <button onClick={() => setIsEditingName(true)}>
                       <PencilIcon className="w-5 h-5" />
                     </button>
@@ -226,8 +228,8 @@ export default function ContactsPage() {
 
             {isPhoneVisible && (
               <>
-                <div className="flex items-center bg-white rounded-[24px] p-1 w-full h-[70px]">
-                  <div className="flex flex-col justify-center w-full px-3">
+                <div className="flex h-[70px] w-full items-center rounded-[24px] bg-white p-1">
+                  <div className="flex w-full flex-col justify-center px-3">
                     {isEditingPhone ? (
                       <input
                         autoFocus
@@ -242,6 +244,7 @@ export default function ContactsPage() {
                           if (event.key === "Backspace" && contactPhone === "+7") {
                             event.preventDefault()
                           }
+
                           if (event.key === "Enter" && contactPhone.length > 2) {
                             event.currentTarget.blur()
                           }
@@ -254,13 +257,14 @@ export default function ContactsPage() {
                           }
                         }}
                         placeholder="+7 ___ ___ __ __"
-                        className="w-full text-[30px] leading-[36px] outline-none bg-transparent text-[#131927] placeholder:text-[#131927]/30 tracking-[-0.02em]"
+                        className="w-full bg-transparent text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927] outline-none placeholder:text-[#131927]/30"
                       />
                     ) : (
                       <div className="flex items-center justify-between">
-                        <span className="text-[30px] leading-[36px] text-[#131927] tracking-[-0.02em]">
+                        <span className="text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927]">
                           {contactPhone}
                         </span>
+
                         <button onClick={() => setIsEditingPhone(true)}>
                           <PencilIcon className="w-5 h-5" />
                         </button>
@@ -282,11 +286,11 @@ export default function ContactsPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 py-3 flex items-end justify-between shrink-0">
+      <div className="flex w-full items-end justify-between px-4 py-3 shrink-0">
         <button
           disabled={isSaving}
           onClick={() => navigate("/platforms")}
-          className="h-14 flex items-center text-[15px] tracking-[-0.02em] text-[#131927] disabled:opacity-30"
+          className="flex h-14 items-center text-[15px] tracking-[-0.02em] text-[#131927] disabled:opacity-30"
         >
           Продолжить без подарка
         </button>
@@ -294,13 +298,10 @@ export default function ContactsPage() {
         <button
           disabled={!isPhoneCompleted || isEditingPhone || isSaving}
           onClick={handleNext}
-          className="h-14 px-6 rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716]
-            shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)]
-            text-[16px] font-semibold text-white flex items-center justify-center
-            disabled:opacity-30"
+          className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)] disabled:opacity-30"
         >
           {isSaving ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             "Далее"
           )}

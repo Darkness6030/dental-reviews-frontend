@@ -1,4 +1,4 @@
-export type Experience = boolean | null
+export type Feedback = boolean | null
 
 export type User = {
     id: number

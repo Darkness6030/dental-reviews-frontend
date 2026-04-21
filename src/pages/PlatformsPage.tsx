@@ -19,10 +19,7 @@ export default function PlatformsPage() {
   const navigate = useNavigate()
   const copyTimeoutRef = useRef<number | null>(null)
 
-  const {
-    reviewText,
-    setReviewText
-  } = useOutletContext<Context>()
+  const { reviewText, setReviewText } = useOutletContext<Context>()
 
   const [platforms, setPlatforms] = useState<Platform[]>([])
   const [isCopied, setIsCopied] = useState(false)
@@ -39,9 +36,7 @@ export default function PlatformsPage() {
 
     const loadText = async () => {
       const review = await loadReview()
-      if (review.review_text) {
-        setReviewText(review.review_text)
-      }
+      if (review.review_text) setReviewText(review.review_text)
     }
 
     loadText()
@@ -66,6 +61,7 @@ export default function PlatformsPage() {
       clearTimeout(copyTimeoutRef.current)
       copyTimeoutRef.current = null
     }
+
     setIsCopied(false)
   }
 
@@ -92,16 +88,16 @@ export default function PlatformsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center">
-      <div className="w-full px-4 pt-4 flex flex-col gap-3 shrink-0">
-        <div className="flex items-start gap-3">
-          <h1 className="flex-1 text-[36px] leading-[90%] font-semibold tracking-[-0.02em] text-[#131927]">
+    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+      <div className="flex w-full flex-col gap-3 px-4 pt-4 shrink-0">
+        <div className="flex w-full items-start gap-3">
+          <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
             Спасибо за<br />уделенное время
           </h1>
 
-          <div className="w-16 h-16 p-[6px] flex items-center justify-center">
-            <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
-              <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
+          <div className="flex w-16 h-16 items-center justify-center p-[6px]">
+            <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#DAE6DA]">
+              <CheckmarkIcon className="h-8 w-8 text-[#298A2C]" />
             </div>
           </div>
         </div>
@@ -111,25 +107,25 @@ export default function PlatformsPage() {
         </p>
       </div>
 
-      <div className="w-full px-4 mt-4 shrink-0">
-        <div className="bg-white rounded-[24px] p-1 flex gap-2 shadow-[0_0_4px_rgba(0,0,0,0.04)]">
-          <div className="flex-1 px-3 py-2 overflow-hidden">
-            <p className="text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] line-clamp-4 opacity-80">
+      <div className="mt-4 w-full px-4 shrink-0">
+        <div className="flex gap-2 rounded-[24px] bg-white p-1 shadow-[0_0_4px_rgba(0,0,0,0.04)]">
+          <div className="flex-1 overflow-hidden px-3 py-2">
+            <p className="line-clamp-4 text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] opacity-80">
               {reviewText}
             </p>
           </div>
 
-          <div className="flex flex-col w-12 shrink-0">
+          <div className="flex w-12 flex-col shrink-0">
             <button
               onClick={() => navigate("/review")}
-              className="w-12 h-12 bg-[#EEEEEE] flex items-center justify-center rounded-t-[20px] border-b border-white"
+              className="flex w-12 h-12 items-center justify-center rounded-t-[20px] border-b border-white bg-[#EEEEEE]"
             >
               <PencilIcon className="w-[18px] h-[18px]" />
             </button>
 
             <button
               onClick={handleCopyReview}
-              className="w-12 h-12 bg-[#EEEEEE] flex items-center justify-center rounded-b-[20px]"
+              className="flex w-12 h-12 items-center justify-center rounded-b-[20px] bg-[#EEEEEE]"
             >
               <CopyIcon className="w-[18px] h-[18px]" />
             </button>
@@ -137,8 +133,8 @@ export default function PlatformsPage() {
         </div>
       </div>
 
-      <div className="w-full px-4 mt-6 flex-1 min-h-0">
-        <h2 className="text-[24px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
+      <div className="flex w-full flex-1 flex-col px-4 min-h-0">
+        <h2 className="mt-6 text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
           Выберите где<br />опубликовать отзыв
         </h2>
 
@@ -148,20 +144,20 @@ export default function PlatformsPage() {
 
         <div className="my-6 flex flex-col gap-2">
           {isLoading ? (
-            <div className="w-full min-h-[120px] flex items-center justify-center">
+            <div className="flex w-full min-h-[120px] items-center justify-center">
               <Loader />
             </div>
           ) : (
-            platforms.filter(platform => platform.is_enabled).map(platform => {
-              return (
+            platforms
+              .filter(platform => platform.is_enabled)
+              .map(platform => (
                 <a
                   key={platform.id}
                   href={platform.url}
                   onClick={event => handlePlatformClick(event, platform)}
-                  className="w-full min-h-[60px] p-1 rounded-[24px] flex items-center gap-3
-                    bg-white shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]"
+                  className="flex w-full min-h-[60px] items-center gap-3 rounded-[24px] bg-white p-1 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]"
                 >
-                  <div className="w-[52px] aspect-square rounded-[20px] bg-[#F2F2F2] overflow-hidden flex items-center justify-center shrink-0">
+                  <div className="flex w-[52px] items-center justify-center overflow-hidden rounded-[20px] bg-[#F2F2F2] aspect-square shrink-0">
                     <img
                       src={platform.image_url ?? "/placeholder.png"}
                       alt={platform.name}
@@ -169,14 +165,13 @@ export default function PlatformsPage() {
                     />
                   </div>
 
-                  <span className="flex-1 text-[15px] leading-[18px] tracking-[-0.02em] font-medium text-[#191919]">
+                  <span className="flex-1 text-[15px] font-medium leading-[18px] tracking-[-0.02em] text-[#191919]">
                     {platform.name}
                   </span>
 
                   <ArrowRightIcon className="w-6 h-6 shrink-0" />
                 </a>
-              )
-            })
+              ))
           )}
         </div>
       </div>

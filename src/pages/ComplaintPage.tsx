@@ -20,6 +20,7 @@ type Context = {
 
 export default function ComplaintPage() {
   const navigate = useNavigate()
+
   const [isAnonymous, setIsAnonymous] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -33,7 +34,7 @@ export default function ComplaintPage() {
     complaintText,
     setComplaintText,
     selectedReasonIds,
-    setSelectedReasonIds,
+    setSelectedReasonIds
   } = useOutletContext<Context>()
 
   const [owner, setOwner] = useState<User | null>(null)
@@ -46,9 +47,9 @@ export default function ComplaintPage() {
       .finally(() => {
         getReasons()
           .then(setReasons)
-          .finally(() => setIsLoading(false));
-      });
-  }, []);
+          .finally(() => setIsLoading(false))
+      })
+  }, [])
 
   const toggleReasonId = (reasonId: number) => {
     setSelectedReasonIds(
@@ -58,24 +59,23 @@ export default function ComplaintPage() {
     )
   }
 
-  const isPhoneCompleted =
-    /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
-
+  const isPhoneCompleted = /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
   const canSubmit =
-    complaintText.trim() &&
-    (isAnonymous || (contactName.trim() && isPhoneCompleted))
+    complaintText.trim().length > 0 &&
+    (isAnonymous || (contactName.trim().length > 0 && isPhoneCompleted))
 
   const handleSubmit = async () => {
     if (!canSubmit || isSaving) return
+    setIsSaving(true)
 
     try {
-      setIsSaving(true)
       await createComplaint(
         isAnonymous ? "" : contactName,
         isAnonymous ? "" : contactPhone,
         complaintText,
         selectedReasonIds
       )
+
       setIsSubmitted(true)
     } finally {
       setIsSaving(false)
@@ -84,21 +84,21 @@ export default function ComplaintPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex justify-center">
-        <div className="w-full px-4 flex flex-col justify-center gap-3">
-          <div className="flex items-start gap-3">
-            <h1 className="text-[36px] leading-[90%] font-semibold tracking-[-0.02em] text-[#131927] flex-1">
+      <div className="flex min-h-screen justify-center bg-[#F5F5F5]">
+        <div className="flex w-full flex-col justify-center gap-3 px-4">
+          <div className="flex w-full items-start gap-3">
+            <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
               Спасибо за<br />обращение
             </h1>
 
-            <div className="w-16 h-16 flex items-center justify-center shrink-0">
-              <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
+            <div className="flex w-16 h-16 items-center justify-center shrink-0">
+              <div className="flex w-[52px] h-[52px] items-center justify-center rounded-full bg-[#DAE6DA]">
                 <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
               </div>
             </div>
           </div>
 
-          <p className="text-[14px] leading-[120%] font-medium tracking-[-0.02em] text-[#131927] opacity-40">
+          <p className="text-[14px] font-medium leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
             Мы рассмотрим ваше обращение и свяжемся с вами в ближайшее время
           </p>
         </div>
@@ -107,33 +107,30 @@ export default function ComplaintPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex flex-col items-center">
-      <div
-        className="w-full bg-white rounded-b-[32px]
-        shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]"
-      >
-        <div className="p-4 flex flex-col gap-4">
-          <h1 className="text-[36px] leading-[90%] font-semibold tracking-[-0.02em] text-[#131927]">
+    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+      <div className="w-full rounded-b-[32px] bg-white shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
+        <div className="flex flex-col gap-4 p-4">
+          <h1 className="text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
             Напишите<br />директору
           </h1>
 
-          <p className="text-[14px] leading-[120%] font-medium tracking-[-0.02em] text-[#131927] opacity-40">
-            Расскажите, что вам не понравилось и мы обязательно исправим
-            недостатки. Ваше обращение придет мне на личную почту и я
-            незамедлительно начну изучать вашу обратную связь
+          <p className="text-[14px] font-medium leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
+            Расскажите, что вам не понравилось и мы обязательно исправим недостатки. Ваше обращение придет мне на личную почту и я незамедлительно начну изучать вашу обратную связь
           </p>
 
           {owner && (
-            <div className="flex items-center gap-3 p-1 bg-[#F2F2F2] rounded-[24px]">
+            <div className="flex items-center gap-3 rounded-[24px] bg-[#F2F2F2] p-1">
               <img
                 src={owner.avatar_url || "/placeholder.png"}
                 alt="Руководитель"
-                className="w-16 aspect-square rounded-[20px] object-cover shrink-0"
+                className="w-16 aspect-square shrink-0 rounded-[20px] object-cover"
               />
+
               <div className="flex flex-col justify-center gap-[2px] overflow-hidden">
-                <span className="text-[15px] leading-[18px] font-medium tracking-[-0.02em] text-[#191919]">
+                <span className="text-[15px] font-medium leading-[18px] tracking-[-0.02em] text-[#191919]">
                   {owner.name}
                 </span>
+
                 <span className="text-[12px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
                   Руководитель DENTAL DAILY
                 </span>
@@ -143,47 +140,43 @@ export default function ComplaintPage() {
         </div>
       </div>
 
-      <div className="w-full p-4 flex flex-col gap-6 flex-1">
+      <div className="flex w-full flex-1 flex-col gap-6 p-4">
         <div className="flex flex-col gap-3">
-          <h2 className="text-[18px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
+          <h2 className="text-[18px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
             Укажите, что вам не понравилось?
           </h2>
 
-          <div
-            className="flex gap-[6px] overflow-x-auto whitespace-nowrap
-              drop-shadow-[0_0_4px_rgba(0,0,0,0.04)]
-              drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]
-              [-ms-overflow-style:none] [scrollbar-width:none]
-              [&::-webkit-scrollbar]:hidden"
-          >
+          <div className="flex gap-[6px] overflow-x-auto whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden drop-shadow-[0_0_4px_rgba(0,0,0,0.04)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]">
             {isLoading ? (
-              <div className="w-full min-h-[56px] flex items-center justify-center">
+              <div className="flex w-full min-h-[56px] items-center justify-center">
                 <Loader />
               </div>
             ) : (
-              reasons.filter(reason => reason.is_enabled).map(reason => {
-                const isSelected = selectedReasonIds.includes(reason.id)
-                return (
-                  <button
-                    key={reason.id}
-                    onClick={() => toggleReasonId(reason.id)}
-                    className={`h-12 px-5 rounded-[16px] shrink-0
-                      text-[15px] leading-[18px] font-normal tracking-[-0.02em]
-                      ${isSelected
-                        ? "bg-[#131927] text-white"
-                        : "bg-white text-[#131927]"
+              reasons
+                .filter(reason => reason.is_enabled)
+                .map(reason => {
+                  const isSelected = selectedReasonIds.includes(reason.id)
+
+                  return (
+                    <button
+                      key={reason.id}
+                      onClick={() => toggleReasonId(reason.id)}
+                      className={`h-12 shrink-0 rounded-[16px] px-5 text-[15px] leading-[18px] tracking-[-0.02em] ${
+                        isSelected
+                          ? "bg-[#131927] text-white"
+                          : "bg-white text-[#131927]"
                       }`}
-                  >
-                    {reason.name}
-                  </button>
-                )
-              })
+                    >
+                      {reason.name}
+                    </button>
+                  )
+                })
             )}
           </div>
         </div>
 
         <div className="flex flex-col gap-3">
-          <h2 className="text-[18px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
+          <h2 className="text-[18px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
             Опишите пожалуйста подробнее
           </h2>
 
@@ -191,14 +184,12 @@ export default function ComplaintPage() {
             value={complaintText}
             onChange={event => setComplaintText(event.target.value)}
             placeholder="Обращение к руководству..."
-            className="w-full min-h-[200px] p-4 bg-white rounded-[16px]
-              text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]
-              placeholder:opacity-40 resize-none outline-none"
+            className="min-h-[200px] w-full resize-none rounded-[16px] bg-white p-4 text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927] placeholder:opacity-40 outline-none"
           />
         </div>
 
         <div className="flex flex-col gap-3">
-          <h2 className="text-[18px] leading-[110%] font-medium tracking-[-0.02em] text-[#131927]">
+          <h2 className="text-[18px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
             Введите имя и номер телефона, для обратной связи с вами
           </h2>
 
@@ -207,39 +198,29 @@ export default function ComplaintPage() {
             onChange={event => setContactName(event.target.value)}
             placeholder="Ваше имя"
             disabled={isAnonymous}
-            className="h-14 px-4 bg-white rounded-[16px]
-              text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]
-              placeholder:opacity-40 outline-none disabled:opacity-40"
+            className="w-full h-14 rounded-[16px] bg-white px-4 text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927] placeholder:opacity-40 outline-none disabled:opacity-40"
           />
 
           <input
             value={contactPhone}
             onFocus={() => {
-              if (!isAnonymous && !contactPhone) {
-                setContactPhone("+7")
-              }
+              if (!isAnonymous && !contactPhone) setContactPhone("+7")
             }}
-            onChange={event => {
-              setContactPhone(formatPhone(event.target.value))
-            }}
+            onChange={event => setContactPhone(formatPhone(event.target.value))}
             onKeyDown={event => {
               if (event.key === "Backspace" && contactPhone === "+7") {
                 event.preventDefault()
               }
             }}
             onBlur={() => {
-              if (contactPhone === "+7") {
-                setContactPhone("")
-              }
+              if (contactPhone === "+7") setContactPhone("")
             }}
             placeholder="Номер телефона"
             disabled={isAnonymous}
-            className="h-14 px-4 bg-white rounded-[16px]
-              text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]
-              placeholder:opacity-40 outline-none disabled:opacity-40"
+            className="w-full h-14 rounded-[16px] bg-white px-4 text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927] placeholder:opacity-40 outline-none disabled:opacity-40"
           />
 
-          <label className="flex items-center gap-2 cursor-pointer">
+          <label className="flex cursor-pointer items-center gap-2">
             <input
               type="checkbox"
               checked={isAnonymous}
@@ -248,45 +229,39 @@ export default function ComplaintPage() {
             />
 
             <div
-              className={`w-6 h-6 rounded-[6px] border flex items-center justify-center shrink-0
-                ${isAnonymous
-                  ? "bg-[#F39416] border-[#F39416]"
-                  : "bg-white border-[rgba(19,25,39,0.16)]"
-                }`}
+              className={`flex w-6 h-6 shrink-0 items-center justify-center rounded-[6px] border ${
+                isAnonymous
+                  ? "border-[#F39416] bg-[#F39416]"
+                  : "border-[rgba(19,25,39,0.16)] bg-white"
+              }`}
             >
               {isAnonymous && (
                 <CheckmarkIcon className="w-4 h-4 text-white" />
               )}
             </div>
 
-            <span className="text-[14px] leading-[120%] font-medium tracking-[-0.02em] text-[#131927]">
+            <span className="text-[14px] font-medium leading-[120%] tracking-[-0.02em] text-[#131927]">
               Отправить анонимно
             </span>
           </label>
         </div>
       </div>
 
-      <div className="w-full px-4 py-3 flex justify-between items-center shrink-0">
+      <div className="flex w-full items-center justify-between px-4 py-3">
         <button
           onClick={() => navigate(-1)}
-          className="w-14 h-14 rounded-full
-            bg-[rgba(213,213,213,0.4)]
-            backdrop-blur-md
-            flex items-center justify-center"
+          className="flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"
         >
           <ArrowBackIcon className="w-6 h-6" />
         </button>
 
         <button
-          disabled={!canSubmit}
+          disabled={!canSubmit || isSaving}
           onClick={handleSubmit}
-          className="h-14 px-6 rounded-full
-            bg-gradient-to-r from-[#F39416] to-[#F33716]
-            text-white font-semibold text-[16px] tracking-[-0.02em]
-            disabled:opacity-30"
+          className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white disabled:opacity-30"
         >
           {isSaving ? (
-            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             "Отправить"
           )}

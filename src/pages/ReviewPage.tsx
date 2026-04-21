@@ -17,6 +17,8 @@ type Context = {
 
 export default function ReviewPage() {
   const navigate = useNavigate()
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+
   const {
     reviewText,
     setReviewText,
@@ -30,14 +32,10 @@ export default function ReviewPage() {
 
   const [atTop, setAtTop] = useState(true)
   const [atBottom, setAtBottom] = useState(false)
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    if (!reviewText) {
-      handleGenerate()
-    } else {
-      setIsLoading(false)
-    }
+    if (!reviewText) handleGenerate()
+    else setIsLoading(false)
   }, [])
 
   useEffect(() => {
@@ -46,14 +44,12 @@ export default function ReviewPage() {
 
     const handleScroll = () => {
       setAtTop(element.scrollTop === 0)
-      setAtBottom(
-        element.scrollTop + element.clientHeight >=
-        element.scrollHeight - 1
-      )
+      setAtBottom(element.scrollTop + element.clientHeight >= element.scrollHeight - 1)
     }
 
     handleScroll()
     element.addEventListener("scroll", handleScroll)
+
     return () => element.removeEventListener("scroll", handleScroll)
   }, [isLoading, isEditing])
 
@@ -73,9 +69,9 @@ export default function ReviewPage() {
 
   const handleSaveEdit = async () => {
     if (isSaving) return
+    setIsSaving(true)
 
     try {
-      setIsSaving(true)
       const review = await loadReview()
       await updateReviewText(review.id, draftText)
       setReviewText(draftText)
@@ -86,10 +82,10 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className="h-screen bg-[#F5F5F5] flex flex-col items-center">
-      <div className="w-full px-4 pt-4 flex flex-col gap-3 shrink-0">
+    <div className="flex h-screen flex-col items-center bg-[#F5F5F5]">
+      <div className="flex w-full flex-col gap-3 px-4 pt-4 shrink-0">
         <div className="flex items-start gap-3">
-          <h1 className="flex-1 text-[36px] leading-[90%] font-semibold tracking-[-0.02em] text-[#131927]">
+          <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
             {isEditing
               ? <>Редактировать<br />отзыв</>
               : isLoading
@@ -101,8 +97,8 @@ export default function ReviewPage() {
             (isLoading ? (
               <Loader />
             ) : (
-              <div className="w-16 h-16 p-[6px] flex items-center justify-center">
-                <div className="w-[52px] h-[52px] rounded-full bg-[#DAE6DA] flex items-center justify-center">
+              <div className="flex w-16 h-16 items-center justify-center p-[6px]">
+                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#DAE6DA]">
                   <CheckmarkIcon className="w-8 h-8 text-[#298A2C]" />
                 </div>
               </div>
@@ -118,20 +114,19 @@ export default function ReviewPage() {
         </p>
       </div>
 
-      <div className="w-full px-4 mt-4 flex flex-1 min-h-0">
+      <div className="mt-4 flex w-full flex-1 min-h-0 px-4">
         <div
-          className={`relative w-full flex flex-col flex-1 rounded-[24px] bg-white p-6
-          shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
-          ${isLoading ? "mb-6" : "overflow-hidden"}`}
+          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${isLoading ? "mb-6" : "overflow-hidden"
+            }`}
         >
           {isLoading ? (
             <div className="flex flex-1 items-center justify-center">
-              <div className="w-full max-w-[313px] h-full flex flex-col justify-between gap-3 animate-pulse">
+              <div className="flex w-full h-full max-w-[313px] flex-col justify-between gap-3 animate-pulse">
                 {Array.from({ length: 12 }).map((_, index) => (
                   <div
                     key={index}
-                    className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8]
-                      ${index % 2 ? "w-[150px]" : ""}`}
+                    className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8] ${index % 2 ? "w-[150px]" : ""
+                      }`}
                   />
                 ))}
               </div>
@@ -139,17 +134,16 @@ export default function ReviewPage() {
           ) : isEditing ? (
             <textarea
               value={draftText}
-              onChange={e => setDraftText(e.target.value)}
-              className="w-full h-full resize-none outline-none overflow-y-auto
-                text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]"
+              onChange={event => setDraftText(event.target.value)}
+              className="w-full h-full resize-none overflow-y-auto text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927] outline-none"
             />
           ) : (
             <>
               <div
                 ref={scrollContainerRef}
-                className="relative flex-1 min-h-0 h-full overflow-y-auto"
+                className="relative h-full flex-1 min-h-0 overflow-y-auto"
               >
-                <p className="text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]  ">
+                <p className="text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]">
                   {reviewText}
                 </p>
               </div>
@@ -175,21 +169,17 @@ export default function ReviewPage() {
       </div>
 
       {!isLoading && (
-        <div className="w-full px-4 py-3 flex items-center justify-between shrink-0">
+        <div className="flex w-full items-center justify-between px-4 py-3 shrink-0">
           {!isEditing ? (
             <>
-              <button
-                onClick={handleGenerate}
-                className="flex items-center gap-2"
-              >
+              <button onClick={handleGenerate} className="flex items-center gap-2">
                 <AIGenerateIcon className="w-5 h-5 text-[#131927]" />
                 <span className="text-[15px]">Сгенерировать ещё</span>
               </button>
 
               <button
                 onClick={() => navigate("/rewards")}
-                className="h-14 px-6 rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716]
-                  text-[16px] font-semibold text-white"
+                className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white"
               >
                 Далее
               </button>
@@ -201,8 +191,7 @@ export default function ReviewPage() {
                   setDraftText(reviewText)
                   setIsEditing(false)
                 }}
-                className="w-14 h-14 rounded-full bg-[rgba(213,213,213,0.4)]
-                  backdrop-blur-md flex items-center justify-center"
+                className="flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"
               >
                 <CancelIcon className="w-6 h-6" />
               </button>
@@ -210,11 +199,10 @@ export default function ReviewPage() {
               <button
                 disabled={isSaving}
                 onClick={handleSaveEdit}
-                className="h-14 px-6 rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716]
-                  text-[16px] font-semibold text-white flex items-center justify-center"
+                className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white"
               >
                 {isSaving ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
                   "Сохранить"
                 )}

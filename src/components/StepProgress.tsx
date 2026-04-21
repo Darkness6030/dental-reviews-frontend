@@ -17,7 +17,7 @@ export function StepProgress({ current, total }: StepProgressProps) {
   const center = svgSize / 2
 
   const isSafari =
-    typeof window !== 'undefined' &&
+    typeof window !== "undefined" &&
     /^((?!chrome|android).)*safari/i.test(navigator.userAgent)
 
   return (
@@ -61,7 +61,7 @@ export function StepProgress({ current, total }: StepProgressProps) {
           fontSize="14"
           fontWeight="600"
           fill="#131927"
-          dy={isSafari ? '0.35em' : '0.1em'}
+          dy={isSafari ? "0.35em" : "0.1em"}
         >
           <tspan>{current}</tspan>
           <tspan fillOpacity={0.4}>/{total}</tspan>
