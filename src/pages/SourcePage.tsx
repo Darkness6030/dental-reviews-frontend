@@ -72,9 +72,7 @@ export default function SourcePage() {
                   <button
                     key={source.id}
                     onClick={() => setSelectedSourceId(source.id)}
-                    className={`flex h-14 w-full items-center justify-start rounded-[16px] px-5 text-[15px] font-medium leading-[18px] tracking-[-0.02em] ${
-                      isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"
-                    }`}
+                    className={`flex h-14 w-full items-center justify-start rounded-[16px] px-5 text-[15px] font-medium leading-[18px] tracking-[-0.02em] ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"}`}
                   >
                     {source.name}
                   </button>
@@ -84,7 +82,7 @@ export default function SourcePage() {
         </div>
       </div>
 
-      <div className="sticky bottom-0 flex w-full items-center justify-between bg-[#F5F5F5] px-4 py-3">
+      <div className="sticky bottom-0 flex w-full items-center justify-between px-4 py-3">
         <button
           onClick={() => navigate(-1)}
           className="flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"

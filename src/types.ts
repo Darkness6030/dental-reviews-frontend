@@ -1,4 +1,8 @@
 export type Feedback = boolean | null
+export type StylePreset =
+  | "basic"
+  | "short"
+  | "friendly"
 
 export type User = {
     id: number

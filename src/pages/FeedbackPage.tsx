@@ -1,6 +1,8 @@
 import { useNavigate, useOutletContext } from "react-router-dom"
 import AIGenerateIcon from "../icons/ai_generate.svg?react"
 import type { Feedback } from "../types"
+import { clearReviewId } from "../utils/storage"
+import { useEffect } from "react"
 
 export type Context = {
   feedback: Feedback
@@ -24,6 +26,10 @@ export default function FeedbackPage() {
   const navigate = useNavigate()
   const { feedback, setFeedback } = useOutletContext<Context>()
 
+  useEffect(() => {
+    clearReviewId()
+  }, [])
+
   return (
     <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
       <div className="flex w-full flex-col items-center gap-6 px-6 pt-6">
@@ -44,9 +50,7 @@ export default function FeedbackPage() {
             <button
               key={option.name}
               onClick={() => setFeedback(option.value)}
-              className={`flex aspect-[178/220] w-full flex-col items-center justify-between rounded-[48px] bg-white p-4 border-[4px] ${
-                feedback === option.value ? "border-[#131927]" : "border-transparent"
-              }`}
+              className={`flex aspect-[178/220] w-full flex-col items-center justify-between rounded-[48px] bg-white p-4 border-[4px] ${feedback === option.value ? "border-[#131927]" : "border-transparent"}`}
             >
               <div className="flex w-full flex-1 items-center justify-center">
                 <img

@@ -79,14 +79,12 @@ export default function DoctorsPage() {
                   <button
                     key={doctor.id}
                     onClick={() => toggleDoctorId(doctor.id)}
-                    className={`flex min-h-[72px] w-full gap-3 rounded-[24px] p-1 ${
-                      isSelected ? "bg-[#131927]" : "bg-white"
-                    }`}
+                    className={`flex min-h-[72px] w-full gap-3 rounded-[24px] p-1
+                      ${isSelected ? "bg-[#131927]" : "bg-white"}`}
                   >
                     <div
-                      className={`w-16 aspect-square flex-shrink-0 overflow-hidden rounded-[20px] ${
-                        isSelected ? "border-4 border-[#131927]" : ""
-                      }`}
+                      className={`w-16 h-16 flex-shrink-0 overflow-hidden rounded-[20px] box-border
+                        ${isSelected ? "border-4 border-[#131927]" : "border-0"}`}
                     >
                       <img
                         src={doctor.avatar_url ?? "/placeholder.png"}
@@ -97,17 +95,15 @@ export default function DoctorsPage() {
 
                     <div className="flex flex-col justify-center gap-[2px] overflow-hidden text-left">
                       <span
-                        className={`truncate text-[15px] font-medium leading-[18px] tracking-[-0.02em] ${
-                          isSelected ? "text-white" : "text-[#191919]"
-                        }`}
+                        className={`truncate text-[15px] font-medium leading-[18px] tracking-[-0.02em]
+                          ${isSelected ? "text-white" : "text-[#191919]"}`}
                       >
                         {doctor.name}
                       </span>
 
                       <span
-                        className={`text-[12px] font-medium leading-[120%] tracking-[-0.02em] opacity-40 ${
-                          isSelected ? "text-white" : "text-[#131927]"
-                        }`}
+                        className={`text-[12px] font-medium leading-[120%] tracking-[-0.02em] opacity-40
+                          ${isSelected ? "text-white" : "text-[#131927]"}`}
                       >
                         {doctor.role}
                       </span>
@@ -119,7 +115,7 @@ export default function DoctorsPage() {
         </div>
       </div>
 
-      <div className="sticky bottom-0 flex w-full items-center justify-between bg-[#F5F5F5] px-4 py-3">
+      <div className="sticky bottom-0 flex w-full items-center justify-between px-4 py-3">
         <button
           onClick={() => navigate(-1)}
           className="flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"

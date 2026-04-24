@@ -9,6 +9,7 @@ import type {
   Reward,
   Service,
   Source,
+  StylePreset,
   User,
 } from "./types"
 
@@ -140,8 +141,13 @@ export const updateReviewText = async (
   return data
 }
 
-export const generateReviewText = async (reviewId: number): Promise<Review> => {
-  const { data } = await client.post(`/reviews/${reviewId}/generate`)
+export const generateReviewText = async (
+  reviewId: number,
+  stylePreset: StylePreset
+): Promise<Review> => {
+  const { data } = await client.post(`/reviews/${reviewId}/generate`, {
+    style_preset: stylePreset
+  })
   return data
 }
 

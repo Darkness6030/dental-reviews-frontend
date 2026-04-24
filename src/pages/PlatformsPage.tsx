@@ -78,18 +78,9 @@ export default function PlatformsPage() {
     }
   }, [])
 
-  const handlePlatformClick = async (
-    event: React.MouseEvent<HTMLAnchorElement>,
-    platform: Platform
-  ) => {
-    event.preventDefault()
-
-    try {
-      const review = await loadReview()
-      await addReviewPlatform(review.id, platform.id)
-    } finally {
-      window.open(platform.url, "_blank", "noopener,noreferrer")
-    }
+  const handlePlatformClick = async (platform: Platform) => {
+    const review = await loadReview()
+    await addReviewPlatform(review.id, platform.id)
   }
 
   return (
@@ -163,7 +154,9 @@ export default function PlatformsPage() {
                 <a
                   key={platform.id}
                   href={platform.url}
-                  onClick={event => handlePlatformClick(event, platform)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => handlePlatformClick(platform)}
                   className="flex w-full min-h-[60px] items-center gap-3 rounded-[24px] bg-white p-1 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]"
                 >
                   <div className="flex w-[52px] items-center justify-center overflow-hidden rounded-[20px] bg-[#F2F2F2] aspect-square shrink-0">

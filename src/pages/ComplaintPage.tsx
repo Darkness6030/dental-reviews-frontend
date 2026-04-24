@@ -161,11 +161,10 @@ export default function ComplaintPage() {
                     <button
                       key={reason.id}
                       onClick={() => toggleReasonId(reason.id)}
-                      className={`h-12 shrink-0 rounded-[16px] px-5 text-[15px] leading-[18px] tracking-[-0.02em] ${
-                        isSelected
-                          ? "bg-[#131927] text-white"
-                          : "bg-white text-[#131927]"
-                      }`}
+                      className={`h-12 shrink-0 rounded-[16px] px-5 text-[15px] leading-[18px] tracking-[-0.02em] ${isSelected
+                        ? "bg-[#131927] text-white"
+                        : "bg-white text-[#131927]"
+                        }`}
                     >
                       {reason.name}
                     </button>
@@ -229,11 +228,10 @@ export default function ComplaintPage() {
             />
 
             <div
-              className={`flex w-6 h-6 shrink-0 items-center justify-center rounded-[6px] border ${
-                isAnonymous
-                  ? "border-[#F39416] bg-[#F39416]"
-                  : "border-[rgba(19,25,39,0.16)] bg-white"
-              }`}
+              className={`flex w-6 h-6 shrink-0 items-center justify-center rounded-[6px] border ${isAnonymous
+                ? "border-[#F39416] bg-[#F39416]"
+                : "border-[rgba(19,25,39,0.16)] bg-white"
+                }`}
             >
               {isAnonymous && (
                 <CheckmarkIcon className="w-4 h-4 text-white" />

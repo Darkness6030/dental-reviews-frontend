@@ -1,8 +1,8 @@
 // @ts-ignore
 import PorterStemmerRu from 'natural/lib/natural/stemmers/porter_stemmer_ru';
 
-const VOLUME_WEIGHT = 0.5;
-const DIVERSITY_WEIGHT = 0.3;
+const VOLUME_WEIGHT = 0.4;
+const DIVERSITY_WEIGHT = 0.4;
 const DESCRIPTIVE_WEIGHT = 0.2;
 
 const isAdjective = (word: string): boolean => {

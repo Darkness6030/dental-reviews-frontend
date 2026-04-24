@@ -81,9 +81,7 @@ export default function AspectsPage() {
                   <button
                     key={aspect.id}
                     onClick={() => toggleAspectId(aspect.id)}
-                    className={`flex min-h-[56px] items-center justify-center rounded-[16px] px-4 text-[15px] font-medium leading-[18px] tracking-[-0.02em] ${
-                      isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"
-                    }`}
+                    className={`flex min-h-[56px] items-center justify-center rounded-[16px] px-4 text-[15px] font-medium leading-[18px] tracking-[-0.02em] ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"}`}
                   >
                     {aspect.name}
                   </button>
@@ -104,7 +102,7 @@ export default function AspectsPage() {
         )}
       </div>
 
-      <div className="sticky bottom-0 flex w-full items-center justify-between bg-[#F5F5F5] px-4 py-3">
+      <div className="sticky bottom-0 flex w-full items-center justify-between px-4 py-3">
         <button
           onClick={() => navigate(-1)}
           className="flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"

@@ -15,6 +15,7 @@ type Context = {
 
 export default function ExperiencePage() {
   const navigate = useNavigate()
+  const indexRef = useRef<HTMLDivElement | null>(null)
   const scrollRef = useRef<HTMLTextAreaElement | null>(null)
 
   const { experienceText, setExperienceText } =
@@ -23,12 +24,16 @@ export default function ExperiencePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  useEffect(() => {
-    if (experienceText) {
-      setIsLoading(false)
-      return
-    }
+  const handleFocus = () => {
+    setTimeout(() => {
+      indexRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      })
+    }, 500)
+  }
 
+  useEffect(() => {
     const loadExperienceText = async () => {
       try {
         const review = await loadReview()
@@ -43,8 +48,12 @@ export default function ExperiencePage() {
     loadExperienceText()
   }, [])
 
-  const wordsRate = useMemo(() => calculateWordsRate(experienceText, 50), [experienceText]);
-  const arrowAngle = -120 + wordsRate * 240;
+  const wordsRate = useMemo(() => {
+    return calculateWordsRate(experienceText, 30)
+  }, [experienceText]);
+
+  const easedRate = wordsRate + (Math.sqrt(wordsRate) - wordsRate) * Math.pow(1 - wordsRate, 3)
+  const arrowAngle = -120 + easedRate * 240
 
   const handleGenerate = async () => {
     if (isSaving) return
@@ -83,9 +92,8 @@ export default function ExperiencePage() {
         </div>
       </div>
 
-      <div className="mt-4 w-full px-4">
+      <div ref={indexRef} className="mt-4 w-full px-4">
         <div className="relative flex items-center gap-4 rounded-[16px] bg-white p-4 shadow-[4px_20px_40px_rgba(0,0,0,0.03)]">
-
           <div className="flex flex-col items-center justify-start w-[90px]">
             <div className="relative w-[72px] h-[72px] flex items-center justify-center">
               <div
@@ -143,6 +151,7 @@ export default function ExperiencePage() {
               ref={scrollRef}
               value={experienceText}
               onChange={event => setExperienceText(event.target.value)}
+              onFocus={handleFocus}
               className="flex-1 w-full resize-none text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927] outline-none"
               placeholder="Ваши впечатления от лечения..."
             />
@@ -150,7 +159,7 @@ export default function ExperiencePage() {
         </div>
       </div>
 
-      <div className="sticky bottom-0 flex w-full items-center justify-between bg-[#F5F5F5] px-4 py-3">
+      <div className="sticky bottom-0 flex w-full items-center justify-between px-4 py-3">
         <button
           onClick={() => navigate(-1)}
           className="flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"
