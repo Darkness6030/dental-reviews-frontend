@@ -12,7 +12,7 @@ export type Context = {
   setSelectedDoctorIds: (ids: number[]) => void
 }
 
-export default function DoctorsPage() {
+export function DoctorsPage() {
   const navigate = useNavigate()
   const { selectedDoctorIds, setSelectedDoctorIds } = useOutletContext<Context>()
 

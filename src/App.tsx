@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Outlet } from "react-router-dom"
 import type { Feedback } from "./types"
 
-export default function App() {
+export function App() {
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [selectedReasonIds, setSelectedReasonIds] = useState<number[]>([])
   const [selectedDoctorIds, setSelectedDoctorIds] = useState<number[]>([])

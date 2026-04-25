@@ -25,7 +25,7 @@ type Context = {
   setExperienceText: (text: string) => void
 }
 
-export default function ExperiencePage() {
+export function ExperiencePage() {
   const navigate = useNavigate()
   const indexRef = useRef<HTMLDivElement | null>(null)
   const scrollRef = useRef<HTMLTextAreaElement | null>(null)
@@ -178,8 +178,8 @@ export default function ExperiencePage() {
       </div>
 
       {isSelectingGender && (
-        <div className="fixed bottom-0 left-0 w-full flex justify-center pb-3 px-4 pointer-events-none">
-          <div className="w-full max-w-[393px] pointer-events-auto">
+        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[393px] pb-3 px-4 pointer-events-none">
+          <div className="w-full pointer-events-auto">
             <div className="rounded-[20px] bg-white p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
               <div className="text-[14px] font-medium mb-3 text-center">
                 Уточните, от какого лица пишем отзыв

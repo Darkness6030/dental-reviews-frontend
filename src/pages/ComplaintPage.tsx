@@ -18,7 +18,7 @@ type Context = {
   setSelectedReasonIds: (ids: number[]) => void
 }
 
-export default function ComplaintPage() {
+export function ComplaintPage() {
   const navigate = useNavigate()
 
   const [isAnonymous, setIsAnonymous] = useState(false)

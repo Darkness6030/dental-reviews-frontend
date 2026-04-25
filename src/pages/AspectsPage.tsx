@@ -12,7 +12,7 @@ type Context = {
   setSelectedAspectIds: (ids: number[]) => void
 }
 
-export default function AspectsPage() {
+export function AspectsPage() {
   const navigate = useNavigate()
   const { selectedAspectIds, setSelectedAspectIds } =
     useOutletContext<Context>()

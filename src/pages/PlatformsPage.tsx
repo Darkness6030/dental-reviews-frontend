@@ -18,7 +18,7 @@ type Context = {
   contactName: string
 }
 
-export default function PlatformsPage() {
+export function PlatformsPage() {
   const navigate = useNavigate()
   const {
     reviewText,

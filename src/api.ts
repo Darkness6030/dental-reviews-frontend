@@ -151,10 +151,12 @@ export const updateReviewText = async (
 
 export const generateReviewText = async (
   reviewId: number,
-  stylePreset: StylePreset
+  stylePreset: StylePreset,
+  useEmojis: boolean
 ): Promise<Review> => {
   const { data } = await client.post(`/reviews/${reviewId}/generate`, {
-    style_preset: stylePreset
+    style_preset: stylePreset,
+    use_emojis: useEmojis
   })
   return data
 }

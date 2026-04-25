@@ -12,7 +12,7 @@ type Context = {
   setSelectedServiceIds: (ids: number[]) => void
 }
 
-export default function ServicesPage() {
+export function ServicesPage() {
   const navigate = useNavigate()
   const { selectedServiceIds, setSelectedServiceIds } =
     useOutletContext<Context>()

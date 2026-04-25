@@ -12,7 +12,7 @@ type Context = {
   setSelectedSourceId: (id: number | null) => void
 }
 
-export default function SourcePage() {
+export function SourcePage() {
   const navigate = useNavigate()
   const { selectedSourceId, setSelectedSourceId } =
     useOutletContext<Context>()

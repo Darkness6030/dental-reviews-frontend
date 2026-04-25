@@ -18,7 +18,7 @@ type Context = {
   setIsCopied: (value: boolean) => void
 }
 
-export default function RewardsPage() {
+export function RewardsPage() {
   const navigate = useNavigate()
   const {
     reviewText,

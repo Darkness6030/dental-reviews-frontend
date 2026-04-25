@@ -22,7 +22,7 @@ const FEEDBACK_OPTIONS = [
   }
 ]
 
-export default function FeedbackPage() {
+export function FeedbackPage() {
   const navigate = useNavigate()
   const { feedback, setFeedback } = useOutletContext<Context>()
 

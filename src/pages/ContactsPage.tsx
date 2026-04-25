@@ -19,7 +19,7 @@ type Context = {
   setIsCopied: (value: boolean) => void
 }
 
-export default function ContactsPage() {
+export function ContactsPage() {
   const navigate = useNavigate()
   const {
     contactName,

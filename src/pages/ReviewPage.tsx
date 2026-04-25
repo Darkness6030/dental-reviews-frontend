@@ -1,18 +1,19 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useOutletContext } from 'react-router-dom'
-import { generateReviewText, updateReviewText } from '../api'
-import { Loader } from '../components/Loader'
-import AIGenerateIcon from '../icons/ai_generate.svg?react'
-import CancelIcon from '../icons/cancel.svg?react'
-import CheckmarkIcon from '../icons/checkmark.svg?react'
-import PencilIcon from '../icons/pencil.svg?react'
-import { loadReview } from '../utils/storage'
-import type { StylePreset } from '../types'
+import { useEffect, useRef, useState } from "react"
+import { useNavigate, useOutletContext } from "react-router-dom"
+import { generateReviewText, updateReviewText } from "../api"
+import { Loader } from "../components/Loader"
+import { Switch } from "../components/Switch"
+import AIGenerateIcon from "../icons/ai_generate.svg?react"
+import CancelIcon from "../icons/cancel.svg?react"
+import CheckmarkIcon from "../icons/checkmark.svg?react"
+import PencilIcon from "../icons/pencil.svg?react"
+import type { StylePreset } from "../types"
+import { loadReview } from "../utils/storage"
 
 const STYLE_PRESET_OPTIONS: { value: StylePreset; label: string }[] = [
-  { value: 'basic', label: '🤝 Базовый' },
-  { value: 'short', label: '🎯 Короткий' },
-  { value: 'friendly', label: '🥰 Дружелюбный' }
+  { value: "basic", label: "🤝 Базовый" },
+  { value: "short", label: "🎯 Короткий" },
+  { value: "friendly", label: "🥰 Дружелюбный" }
 ]
 
 type Context = {
@@ -22,44 +23,49 @@ type Context = {
   setDraftText: (text: string) => void
 }
 
-export default function ReviewPage() {
+export function ReviewPage() {
   const navigate = useNavigate()
   const reviewIdRef = useRef<number | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
 
-  const { reviewText, setReviewText, draftText, setDraftText } =
-    useOutletContext<Context>()
+  const {
+    reviewText,
+    setReviewText,
+    draftText,
+    setDraftText
+  } = useOutletContext<Context>()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [atTop, setAtTop] = useState(true)
   const [atBottom, setAtBottom] = useState(false)
+  const [useEmojis, setUseEmojis] = useState(true)
 
-  const [generationsLeft, setGenerationsLeft] = useState<number>(0)
-  const [generationsLimit, setGenerationsLimit] = useState<number>(0)
+  const [generationsLeft, setGenerationsLeft] = useState(0)
+  const [generationsLimit, setGenerationsLimit] = useState(0)
 
-  const [stylePreset, setStylePreset] = useState<StylePreset>('basic')
-  const [styleCache, setStyleCache] = useState<Record<StylePreset, string>>({} as Record<StylePreset, string>)
+  const [stylePreset, setStylePreset] = useState<StylePreset>("basic")
+  const [styleCache, setStyleCache] = useState<Record<string, string>>({})
 
   useEffect(() => {
     const loadReviewData = async () => {
       const review = await loadReview()
       reviewIdRef.current = review.id
 
-      const review_text = review.review_text ?? ''
-      setReviewText(review_text)
-      setDraftText(review_text)
+      const reviewText = review.review_text ?? ""
+      setReviewText(reviewText)
+      setDraftText(reviewText)
 
-      const generations_left = review.generations_limit - review.generations_spent
-      setGenerationsLeft(generations_left)
+      const generationsLeft = review.generations_limit - review.generations_spent
+      setGenerationsLeft(generationsLeft)
       setGenerationsLimit(review.generations_limit)
 
-      if (review_text) {
-        setStyleCache(prev => ({ ...prev, basic: review_text }))
+      if (reviewText) {
+        setStyleCache(prev => ({ ...prev, [`basic_${useEmojis}`]: reviewText }))
         setIsLoading(false)
       } else {
-        handleGenerate('basic')
+        handleGenerate("basic")
       }
     }
 
@@ -73,13 +79,15 @@ export default function ReviewPage() {
     const handleScroll = () => {
       setAtTop(element.scrollTop === 0)
       setAtBottom(
-        element.scrollTop + element.clientHeight >= element.scrollHeight - 1
+        element.scrollTop + element.clientHeight >=
+        element.scrollHeight - 1
       )
     }
 
     handleScroll()
-    element.addEventListener('scroll', handleScroll)
-    return () => element.removeEventListener('scroll', handleScroll)
+    element.addEventListener("scroll", handleScroll)
+
+    return () => element.removeEventListener("scroll", handleScroll)
   }, [])
 
   const handleGenerate = async (
@@ -88,10 +96,11 @@ export default function ReviewPage() {
   ) => {
     if (!reviewIdRef.current) return
 
-    if (!forceGenerate && styleCache[newPreset]) {
+    const cacheKey = `${newPreset}_${useEmojis}`
+    if (!forceGenerate && styleCache[cacheKey]) {
       setStylePreset(newPreset)
-      setReviewText(styleCache[newPreset])
-      setDraftText(styleCache[newPreset])
+      setReviewText(styleCache[cacheKey])
+      setDraftText(styleCache[cacheKey])
       setIsEditing(false)
       return
     }
@@ -103,17 +112,21 @@ export default function ReviewPage() {
     try {
       const generated = await generateReviewText(
         reviewIdRef.current,
-        newPreset
+        newPreset,
+        useEmojis
       )
 
-      const generated_text = generated.review_text ?? ''
-      setReviewText(generated_text)
-      setDraftText(generated_text)
-      setStyleCache(prev => ({ ...prev, [newPreset]: generated_text }))
+      const reviewText = generated.review_text ?? ""
+      setReviewText(reviewText)
+      setDraftText(reviewText)
 
-      const generations_left =
-        generated.generations_limit - generated.generations_spent
-      setGenerationsLeft(generations_left)
+      setStyleCache(prev => ({
+        ...prev,
+        [cacheKey]: reviewText
+      }))
+
+      const generationsLeft = generated.generations_limit - generated.generations_spent
+      setGenerationsLeft(generationsLeft)
       setGenerationsLimit(generated.generations_limit)
     } finally {
       setIsLoading(false)
@@ -127,7 +140,7 @@ export default function ReviewPage() {
     try {
       await updateReviewText(reviewIdRef.current, draftText)
       setReviewText(draftText)
-      setStyleCache(prev => ({ ...prev, [stylePreset]: draftText }))
+      setStyleCache(prev => ({ ...prev, [`${stylePreset}_${useEmojis}`]: draftText }))
       setIsEditing(false)
     } finally {
       setIsSaving(false)
@@ -135,86 +148,88 @@ export default function ReviewPage() {
   }
 
   return (
-    <div className='flex h-screen flex-col items-center bg-[#F5F5F5]'>
-      <div className='flex w-full flex-col gap-3 px-4 pt-4 shrink-0'>
-        <div className='flex items-start gap-3'>
-          <h1 className='flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]'>
-            {isEditing ? (
-              <>
-                Редактировать
-                <br />
-                отзыв
-              </>
-            ) : isLoading ? (
-              <>
-                Пишем
-                <br />
-                отзыв…
-              </>
-            ) : (
-              <>
-                Отзыв
-                <br />
-                сгенерирован
-              </>
-            )}
+    <div className="flex h-screen flex-col items-center bg-[#F5F5F5]">
+      <div className="flex w-full shrink-0 flex-col gap-3 px-4 pt-4">
+        <div className="flex items-start gap-3">
+          <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
+            {isEditing
+              ? <>Редактировать<br />отзыв</>
+              : isLoading ?
+                <>Пишем<br />отзыв…</> :
+                <>Отзыв<br />сгенерирован</>
+            }
           </h1>
 
           {!isEditing &&
             (isLoading ? (
               <Loader />
             ) : (
-              <div className='flex w-16 h-16 items-center justify-center p-[6px]'>
-                <div className='flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#DAE6DA]'>
-                  <CheckmarkIcon className='w-8 h-8 text-[#298A2C]' />
+              <div className="flex h-16 w-16 items-center justify-center p-[6px]">
+                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[#DAE6DA]">
+                  <CheckmarkIcon className="h-8 w-8 text-[#298A2C]" />
                 </div>
               </div>
             ))}
         </div>
 
-        <p className='text-[14px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40'>
+        <p className="text-[14px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
           {isEditing
-            ? 'Вы можете изменить текст отзыва'
+            ? "Вы можете изменить текст отзыва"
             : isLoading
-              ? 'Чтобы он был интересным и информативным'
-              : 'Но при желании вы можете его изменить'}
+              ? "Чтобы он был интересным и информативным"
+              : "Но при желании вы можете его изменить"
+          }
         </p>
       </div>
 
-      <div className='mt-4 flex w-full flex-1 min-h-0 px-4'>
+      <div className="mt-4 flex min-h-0 w-full flex-1 px-4">
         <div
-          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${isLoading ? 'mb-6' : 'overflow-hidden'
-            }`}
+          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
+            ${isLoading ? "mb-6" : "overflow-hidden"}`}
         >
           {!isEditing && (
-            <div className='flex gap-2 mb-2'>
-              {STYLE_PRESET_OPTIONS.map(option => {
-                const disabled = isLoading || !generationsLeft
-                return (
-                  <button
-                    key={option.value}
-                    onClick={() => handleGenerate(option.value)}
-                    disabled={disabled}
-                    className={`flex-1 px-2 py-1.5 rounded-full text-[12px] whitespace-nowrap text-center ${stylePreset === option.value
-                      ? 'bg-[#131927] text-white'
-                      : 'bg-[#F0F0F0]'
-                      } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
-                  >
-                    {option.label}
-                  </button>
-                )
-              })}
-            </div>
+            <>
+              <div className="mb-2 flex gap-2">
+                {STYLE_PRESET_OPTIONS.map(option => {
+                  const disabled = isLoading || !generationsLeft
+                  return (
+                    <button
+                      key={option.value}
+                      onClick={() => handleGenerate(option.value)}
+                      disabled={disabled}
+                      className={`flex-1 whitespace-nowrap rounded-full px-2 py-1.5 text-center text-[12px]
+                        ${stylePreset === option.value
+                          ? "bg-[#131927] text-white"
+                          : "bg-[#F0F0F0]"
+                        } ${disabled ? "cursor-not-allowed opacity-30" : ""}`}
+                    >
+                      {option.label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[13px] text-[#131927] opacity-60">
+                  Использовать эмодзи
+                </span>
+
+                <Switch
+                  checked={useEmojis}
+                  handleChange={() => setUseEmojis(!useEmojis)}
+                />
+              </div>
+            </>
           )}
 
           {isLoading ? (
-            <div className='flex flex-1 items-center justify-center'>
-              <div className='flex w-full h-full max-w-[313px] flex-col justify-between gap-3 animate-pulse'>
+            <div className="flex flex-1 items-center justify-center">
+              <div className="flex h-full w-full max-w-[313px] animate-pulse flex-col justify-between gap-3">
                 {Array.from({ length: 12 }).map((_, index) => (
                   <div
                     key={index}
-                    className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8] ${index % 2 ? 'w-[150px]' : ''
-                      }`}
+                    className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8]
+                      ${index % 2 ? "w-[150px]" : ""}`}
                   />
                 ))}
               </div>
@@ -223,32 +238,35 @@ export default function ReviewPage() {
             <textarea
               value={draftText}
               onChange={event => setDraftText(event.target.value)}
-              className='w-full h-full resize-none overflow-y-auto text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927] outline-none'
+              className="h-full w-full resize-none overflow-y-auto text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927] outline-none"
             />
           ) : (
             <>
               <div
                 ref={scrollContainerRef}
-                className='relative h-full flex-1 min-h-0 overflow-y-auto'
+                className="relative flex h-full min-h-0 flex-1 overflow-y-auto"
               >
-                <p className='text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]'>
+                <p className="text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]">
                   {reviewText}
                 </p>
               </div>
 
               {!atTop && (
-                <div className='pointer-events-none absolute top-6 left-6 right-6 h-8 bg-gradient-to-b from-white to-transparent' />
+                <div className="pointer-events-none absolute left-6 right-6 top-6 h-8 bg-gradient-to-b from-white to-transparent" />
               )}
+
               {!atBottom && (
-                <div className='pointer-events-none absolute bottom-14 left-6 right-6 h-12 bg-gradient-to-t from-white to-transparent' />
+                <div className="pointer-events-none absolute bottom-14 left-6 right-6 h-12 bg-gradient-to-t from-white to-transparent" />
               )}
 
               <button
                 onClick={() => setIsEditing(true)}
-                className='mt-4 flex items-center gap-2 opacity-40 shrink-0'
+                className="mt-4 flex shrink-0 items-center gap-2 opacity-40"
               >
-                <PencilIcon className='w-5 h-5' />
-                <span className='text-[14px]'>Редактировать отзыв</span>
+                <PencilIcon className="h-5 w-5" />
+                <span className="text-[14px]">
+                  Редактировать отзыв
+                </span>
               </button>
             </>
           )}
@@ -256,25 +274,25 @@ export default function ReviewPage() {
       </div>
 
       {!isLoading && (
-        <div className='flex w-full items-center justify-between px-4 py-3 shrink-0'>
+        <div className="flex w-full shrink-0 items-center justify-between px-4 py-3">
           {!isEditing ? (
             <>
               <button
                 onClick={() => handleGenerate(stylePreset, true)}
                 disabled={!generationsLeft}
-                className={`flex items-center gap-2 ${!generationsLeft ? 'opacity-20' : ''
-                  }`}
+                className={`flex items-center gap-2
+                  ${!generationsLeft ? "opacity-20" : ""}`}
               >
-                <AIGenerateIcon className='w-5 h-5 text-[#131927]' />
-                <span className='text-[15px]'>
-                  {' '}
-                  Сгенерировать ещё ({generationsLeft}/{generationsLimit})
+                <AIGenerateIcon className="h-5 w-5 text-[#131927]" />
+                <span className="text-[15px]">
+                  Сгенерировать ещё ({generationsLeft}/
+                  {generationsLimit})
                 </span>
               </button>
 
               <button
-                onClick={() => navigate('/rewards')}
-                className='flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white'
+                onClick={() => navigate("/rewards")}
+                className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white"
               >
                 Далее
               </button>
@@ -286,20 +304,20 @@ export default function ReviewPage() {
                   setDraftText(reviewText)
                   setIsEditing(false)
                 }}
-                className='flex w-14 h-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md'
+                className="flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(213,213,213,0.4)] backdrop-blur-md"
               >
-                <CancelIcon className='w-6 h-6' />
+                <CancelIcon className="h-6 w-6" />
               </button>
 
               <button
                 disabled={isSaving}
                 onClick={handleSaveEdit}
-                className='flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white'
+                className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white"
               >
                 {isSaving ? (
-                  <div className='w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
-                  'Сохранить'
+                  "Сохранить"
                 )}
               </button>
             </>
