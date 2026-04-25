@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { getRewards, setReviewReward } from "../api"
-import CopiedToast from "../components/CopiedToast"
 import { Loader } from "../components/Loader"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
+import CopiedIcon from "../icons/copied.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Reward } from "../types"
@@ -13,22 +13,23 @@ type Context = {
   reviewText: string
   setReviewText: (text: string) => void
   selectedRewardId: number | null
-  setSelectedRewardId: (id: number | null) => void
+  setSelectedRewardId: (id: number) => void
+  isCopied: boolean
+  setIsCopied: (value: boolean) => void
 }
 
 export default function RewardsPage() {
   const navigate = useNavigate()
-  const copyTimeoutRef = useRef<number | null>(null)
-
   const {
     reviewText,
     setReviewText,
     selectedRewardId,
-    setSelectedRewardId
+    setSelectedRewardId,
+    isCopied,
+    setIsCopied
   } = useOutletContext<Context>()
 
   const [rewards, setRewards] = useState<Reward[]>([])
-  const [isCopied, setIsCopied] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -54,33 +55,7 @@ export default function RewardsPage() {
   const handleCopyReview = async () => {
     await navigator.clipboard.writeText(reviewText)
     setIsCopied(true)
-
-    if (copyTimeoutRef.current) {
-      clearTimeout(copyTimeoutRef.current)
-    }
-
-    copyTimeoutRef.current = window.setTimeout(() => {
-      setIsCopied(false)
-      copyTimeoutRef.current = null
-    }, 2000)
   }
-
-  const handleCloseToast = () => {
-    if (copyTimeoutRef.current) {
-      clearTimeout(copyTimeoutRef.current)
-      copyTimeoutRef.current = null
-    }
-
-    setIsCopied(false)
-  }
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current)
-      }
-    }
-  }, [])
 
   const handleNext = async (rewardId: number) => {
     if (isSaving) return
@@ -141,6 +116,21 @@ export default function RewardsPage() {
         </div>
       </div>
 
+      <div className="mt-2 flex w-full items-center gap-2 px-4 justify-start h-6">
+        {isCopied ? (
+          <>
+            <CopiedIcon className="w-6 h-6" />
+            <span className="text-[13px] font-medium leading-[120%] tracking-[-0.02em] text-[#F39416]">
+              Отзыв скопирован
+            </span>
+          </>
+        ) : (
+          <span className="text-[13px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
+            Не забудьте скопировать готовый отзыв ⬆️
+          </span>
+        )}
+      </div>
+
       <div className="mt-6 flex w-full flex-1 min-h-0 flex-col px-4">
         <h2 className="text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
           Выберите подарок<br />за публикацию отзыва
@@ -167,9 +157,8 @@ export default function RewardsPage() {
                   <button
                     key={reward.id}
                     onClick={() => setSelectedRewardId(reward.id)}
-                    className={`flex min-h-[72px] w-full items-center gap-3 rounded-[24px] p-1 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${
-                      isSelected ? "bg-[#131927] text-white" : "bg-white text-[#191919]"
-                    }`}
+                    className={`flex min-h-[72px] w-full items-center gap-3 rounded-[24px] p-1 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#191919]"
+                      }`}
                   >
                     <div className="flex w-16 h-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-[#F2F2F2]">
                       <img
@@ -210,8 +199,6 @@ export default function RewardsPage() {
           )}
         </button>
       </div>
-
-      {isCopied && <CopiedToast onClose={handleCloseToast} />}
     </div>
   )
 }

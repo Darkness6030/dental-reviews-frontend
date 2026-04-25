@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { addReviewPlatform, getPlatforms } from "../api"
-import CopiedToast from "../components/CopiedToast"
 import { Loader } from "../components/Loader"
 import ArrowRightIcon from "../icons/arrow_right.svg?react"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
+import CopiedIcon from "../icons/copied.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Platform } from "../types"
 import { loadReview } from "../utils/storage"
@@ -13,21 +13,22 @@ import { loadReview } from "../utils/storage"
 type Context = {
   reviewText: string
   setReviewText: (text: string) => void
+  isCopied: boolean
+  setIsCopied: (value: boolean) => void
   contactName: string
 }
 
 export default function PlatformsPage() {
   const navigate = useNavigate()
-  const copyTimeoutRef = useRef<number | null>(null)
-
   const {
     reviewText,
     setReviewText,
+    isCopied,
+    setIsCopied,
     contactName
   } = useOutletContext<Context>()
 
   const [platforms, setPlatforms] = useState<Platform[]>([])
-  const [isCopied, setIsCopied] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -50,33 +51,7 @@ export default function PlatformsPage() {
   const handleCopyReview = async () => {
     await navigator.clipboard.writeText(reviewText)
     setIsCopied(true)
-
-    if (copyTimeoutRef.current) {
-      clearTimeout(copyTimeoutRef.current)
-    }
-
-    copyTimeoutRef.current = window.setTimeout(() => {
-      setIsCopied(false)
-      copyTimeoutRef.current = null
-    }, 2000)
   }
-
-  const handleCloseToast = () => {
-    if (copyTimeoutRef.current) {
-      clearTimeout(copyTimeoutRef.current)
-      copyTimeoutRef.current = null
-    }
-
-    setIsCopied(false)
-  }
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current)
-      }
-    }
-  }, [])
 
   const handlePlatformClick = async (platform: Platform) => {
     const review = await loadReview()
@@ -133,6 +108,21 @@ export default function PlatformsPage() {
         </div>
       </div>
 
+      <div className="mt-2 flex w-full items-center gap-2 px-4 justify-start h-6">
+        {isCopied ? (
+          <>
+            <CopiedIcon className="w-6 h-6" />
+            <span className="text-[13px] font-medium leading-[120%] tracking-[-0.02em] text-[#F39416]">
+              Отзыв скопирован
+            </span>
+          </>
+        ) : (
+          <span className="text-[13px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
+            Не забудьте скопировать готовый отзыв ⬆️
+          </span>
+        )}
+      </div>
+
       <div className="flex w-full flex-1 flex-col px-4 min-h-0">
         <h2 className="mt-6 text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
           Выберите где<br />опубликовать отзыв
@@ -177,8 +167,6 @@ export default function PlatformsPage() {
           )}
         </div>
       </div>
-
-      {isCopied && <CopiedToast onClose={handleCloseToast} />}
     </div>
   )
 }

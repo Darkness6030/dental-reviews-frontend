@@ -16,6 +16,7 @@ export default function App() {
   const [experienceText, setExperienceText] = useState("")
   const [reviewText, setReviewText] = useState("")
   const [draftText, setDraftText] = useState("")
+  const [isCopied, setIsCopied] = useState(false)
 
   return (
     <div className="w-full min-h-screen bg-[#F5F5F5] flex justify-center">
@@ -47,7 +48,9 @@ export default function App() {
             reviewText,
             setReviewText,
             draftText,
-            setDraftText
+            setDraftText,
+            isCopied,
+            setIsCopied
           }}
         />
       </div>

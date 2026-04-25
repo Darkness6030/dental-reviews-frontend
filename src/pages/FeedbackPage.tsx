@@ -1,8 +1,8 @@
+import { useEffect } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import AIGenerateIcon from "../icons/ai_generate.svg?react"
 import type { Feedback } from "../types"
 import { clearReviewId } from "../utils/storage"
-import { useEffect } from "react"
 
 export type Context = {
   feedback: Feedback

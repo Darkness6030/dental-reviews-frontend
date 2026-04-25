@@ -27,34 +27,39 @@ export default function ReviewPage() {
   const reviewIdRef = useRef<number | null>(null)
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
 
-  const {
-    reviewText,
-    setReviewText,
-    draftText,
-    setDraftText
-  } = useOutletContext<Context>()
+  const { reviewText, setReviewText, draftText, setDraftText } =
+    useOutletContext<Context>()
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-
   const [atTop, setAtTop] = useState(true)
   const [atBottom, setAtBottom] = useState(false)
+
   const [generationsLeft, setGenerationsLeft] = useState<number>(0)
+  const [generationsLimit, setGenerationsLimit] = useState<number>(0)
+
   const [stylePreset, setStylePreset] = useState<StylePreset>('basic')
+  const [styleCache, setStyleCache] = useState<Record<StylePreset, string>>({} as Record<StylePreset, string>)
 
   useEffect(() => {
     const loadReviewData = async () => {
       const review = await loadReview()
       reviewIdRef.current = review.id
-      setReviewText(review.review_text ?? '')
-      setDraftText(review.review_text ?? '')
-      setGenerationsLeft(review.generations_left)
 
-      if (!reviewText) {
-        handleGenerate('basic')
-      } else {
+      const review_text = review.review_text ?? ''
+      setReviewText(review_text)
+      setDraftText(review_text)
+
+      const generations_left = review.generations_limit - review.generations_spent
+      setGenerationsLeft(generations_left)
+      setGenerationsLimit(review.generations_limit)
+
+      if (review_text) {
+        setStyleCache(prev => ({ ...prev, basic: review_text }))
         setIsLoading(false)
+      } else {
+        handleGenerate('basic')
       }
     }
 
@@ -74,12 +79,22 @@ export default function ReviewPage() {
 
     handleScroll()
     element.addEventListener('scroll', handleScroll)
-
     return () => element.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const handleGenerate = async (newPreset: StylePreset = stylePreset) => {
+  const handleGenerate = async (
+    newPreset: StylePreset = stylePreset,
+    forceGenerate = false
+  ) => {
     if (!reviewIdRef.current) return
+
+    if (!forceGenerate && styleCache[newPreset]) {
+      setStylePreset(newPreset)
+      setReviewText(styleCache[newPreset])
+      setDraftText(styleCache[newPreset])
+      setIsEditing(false)
+      return
+    }
 
     setIsLoading(true)
     setIsEditing(false)
@@ -91,9 +106,15 @@ export default function ReviewPage() {
         newPreset
       )
 
-      setReviewText(generated.review_text ?? '')
-      setDraftText(generated.review_text ?? '')
-      setGenerationsLeft(generated.generations_left)
+      const generated_text = generated.review_text ?? ''
+      setReviewText(generated_text)
+      setDraftText(generated_text)
+      setStyleCache(prev => ({ ...prev, [newPreset]: generated_text }))
+
+      const generations_left =
+        generated.generations_limit - generated.generations_spent
+      setGenerationsLeft(generations_left)
+      setGenerationsLimit(generated.generations_limit)
     } finally {
       setIsLoading(false)
     }
@@ -106,6 +127,7 @@ export default function ReviewPage() {
     try {
       await updateReviewText(reviewIdRef.current, draftText)
       setReviewText(draftText)
+      setStyleCache(prev => ({ ...prev, [stylePreset]: draftText }))
       setIsEditing(false)
     } finally {
       setIsSaving(false)
@@ -117,11 +139,25 @@ export default function ReviewPage() {
       <div className='flex w-full flex-col gap-3 px-4 pt-4 shrink-0'>
         <div className='flex items-start gap-3'>
           <h1 className='flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]'>
-            {isEditing
-              ? <>Редактировать<br />отзыв</>
-              : isLoading
-                ? <>Пишем<br />отзыв…</>
-                : <>Отзыв<br />сгенерирован</>}
+            {isEditing ? (
+              <>
+                Редактировать
+                <br />
+                отзыв
+              </>
+            ) : isLoading ? (
+              <>
+                Пишем
+                <br />
+                отзыв…
+              </>
+            ) : (
+              <>
+                Отзыв
+                <br />
+                сгенерирован
+              </>
+            )}
           </h1>
 
           {!isEditing &&
@@ -147,7 +183,8 @@ export default function ReviewPage() {
 
       <div className='mt-4 flex w-full flex-1 min-h-0 px-4'>
         <div
-          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${isLoading ? 'mb-6' : 'overflow-hidden'}`}
+          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${isLoading ? 'mb-6' : 'overflow-hidden'
+            }`}
         >
           {!isEditing && (
             <div className='flex gap-2 mb-2'>
@@ -159,8 +196,8 @@ export default function ReviewPage() {
                     onClick={() => handleGenerate(option.value)}
                     disabled={disabled}
                     className={`flex-1 px-2 py-1.5 rounded-full text-[12px] whitespace-nowrap text-center ${stylePreset === option.value
-                        ? 'bg-[#131927] text-white'
-                        : 'bg-[#F0F0F0]'
+                      ? 'bg-[#131927] text-white'
+                      : 'bg-[#F0F0F0]'
                       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''}`}
                   >
                     {option.label}
@@ -176,7 +213,8 @@ export default function ReviewPage() {
                 {Array.from({ length: 12 }).map((_, index) => (
                   <div
                     key={index}
-                    className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8] ${index % 2 ? 'w-[150px]' : ''}`}
+                    className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8] ${index % 2 ? 'w-[150px]' : ''
+                      }`}
                   />
                 ))}
               </div>
@@ -201,7 +239,6 @@ export default function ReviewPage() {
               {!atTop && (
                 <div className='pointer-events-none absolute top-6 left-6 right-6 h-8 bg-gradient-to-b from-white to-transparent' />
               )}
-
               {!atBottom && (
                 <div className='pointer-events-none absolute bottom-14 left-6 right-6 h-12 bg-gradient-to-t from-white to-transparent' />
               )}
@@ -223,13 +260,15 @@ export default function ReviewPage() {
           {!isEditing ? (
             <>
               <button
-                onClick={() => handleGenerate(stylePreset)}
+                onClick={() => handleGenerate(stylePreset, true)}
                 disabled={!generationsLeft}
-                className={`flex items-center gap-2 ${!generationsLeft ? 'opacity-20' : ''}`}
+                className={`flex items-center gap-2 ${!generationsLeft ? 'opacity-20' : ''
+                  }`}
               >
                 <AIGenerateIcon className='w-5 h-5 text-[#131927]' />
                 <span className='text-[15px]'>
-                  Сгенерировать ещё ({generationsLeft}/3)
+                  {' '}
+                  Сгенерировать ещё ({generationsLeft}/{generationsLimit})
                 </span>
               </button>
 

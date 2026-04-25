@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { createComplaint, getOwner, getReasons } from "../api"
 import { Loader } from "../components/Loader"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
-import type { User, Reason } from "../types"
-import { createComplaint, getOwner, getReasons } from "../api"
+import type { Reason, User } from "../types"
 import { formatPhone } from "../utils/phone"
 
 type Context = {

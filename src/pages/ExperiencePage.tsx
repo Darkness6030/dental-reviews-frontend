@@ -1,12 +1,24 @@
-import { useEffect, useRef, useState, useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
-import { updateReviewExperience } from "../api"
+import { setReviewGender, updateReviewExperience } from "../api"
 import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import AIGenerateIcon from "../icons/ai_generate.svg?react"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
 import { loadReview } from "../utils/storage"
 import { calculateWordsRate } from "../utils/words"
+import { PoetryIndex } from "../components/PoetryIndex"
+
+const GENDER_OPTIONS = [
+  {
+    key: "male",
+    label: "🧔🏻 Мужчина",
+  },
+  {
+    key: "female",
+    label: "👩🏼 Женщина",
+  },
+]
 
 type Context = {
   experienceText: string
@@ -23,6 +35,8 @@ export default function ExperiencePage() {
 
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+  const [isSelectingGender, setIsSelectingGender] = useState(false)
+  const [selectedGender, setSelectedGender] = useState<string | null>(null)
 
   const handleFocus = () => {
     setTimeout(() => {
@@ -50,15 +64,39 @@ export default function ExperiencePage() {
 
   const wordsRate = useMemo(() => {
     return calculateWordsRate(experienceText, 30)
-  }, [experienceText]);
+  }, [experienceText])
 
   const easedRate = wordsRate + (Math.sqrt(wordsRate) - wordsRate) * Math.pow(1 - wordsRate, 3)
   const arrowAngle = -120 + easedRate * 240
 
   const handleGenerate = async () => {
     if (isSaving) return
-    setIsSaving(true)
 
+    if (experienceText.trim().length < 100) {
+      setIsSelectingGender(true)
+      return
+    }
+
+    await proceedGenerate()
+  }
+
+  const handleSelectGender = async (gender: string) => {
+    if (isSaving) return
+
+    setIsSaving(true)
+    setSelectedGender(gender)
+
+    try {
+      const review = await loadReview()
+      await setReviewGender(review.id, gender)
+      await proceedGenerate()
+    } finally {
+      setIsSelectingGender(false)
+    }
+  }
+
+  const proceedGenerate = async () => {
+    setIsSaving(true)
     try {
       const review = await loadReview()
       await updateReviewExperience(review.id, experienceText)
@@ -93,51 +131,7 @@ export default function ExperiencePage() {
       </div>
 
       <div ref={indexRef} className="mt-4 w-full px-4">
-        <div className="relative flex items-center gap-4 rounded-[16px] bg-white p-4 shadow-[4px_20px_40px_rgba(0,0,0,0.03)]">
-          <div className="flex flex-col items-center justify-start w-[90px]">
-            <div className="relative w-[72px] h-[72px] flex items-center justify-center">
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `conic-gradient(from 230deg, #9AA3B2 0%, #F39416 22%, #2DBE60 44%, #14532D 66%, #14532D 100%)`,
-                  WebkitMaskImage: `url('data:image/svg+xml;utf8,<svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg"><path d="M 12 50 A 28 28 0 1 1 60 50" fill="none" stroke="black" stroke-width="8" stroke-linecap="round" /></svg>')`,
-                  maskImage: `url('data:image/svg+xml;utf8,<svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg"><path d="M 12 50 A 28 28 0 1 1 60 50" fill="none" stroke="black" stroke-width="8" stroke-linecap="round" /></svg>')`,
-                  WebkitMaskRepeat: 'no-repeat',
-                  maskRepeat: 'no-repeat',
-                }}
-              />
-
-              <div className="text-[28px] z-10">🚀</div>
-
-              <div
-                className="absolute flex items-center justify-center z-20"
-                style={{
-                  transform: `rotate(${arrowAngle}deg) translateY(-28px) rotate(180deg)`,
-                  transformOrigin: "center",
-                  transition: "transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" // Плавный отскок (back-out)
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 100 100" className="fill-black">
-                  <path d="M50 87.5H24a10 10 0 0 1-8.65-15l13-22.5 13-22.52a10 10 0 0 1 17.3 0l13 22.52 13 22.52A10 10 0 0 1 76 87.5Z" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="text-[9px] leading-[120%] tracking-[-0.02em] text-black text-center">
-              Индекс пользы<br />и поэтичности
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <div className="text-[12px] leading-[120%] font-medium tracking-[-0.02em] text-[#131927]">
-              Чем подробнее вы опишете, тем полезнее ваш отзыв будет для других
-            </div>
-            <div className="text-[12px] leading-[120%] font-medium tracking-[-0.02em] text-[#131927] opacity-40">
-              Кстати, каждый месяц мы проводим конкурс на самый поэтичный отзыв.
-              Победителю вручаем персональный подарок от руководства клиники 😊
-            </div>
-          </div>
-        </div>
+        <PoetryIndex arrowAngle={arrowAngle} />
       </div>
 
       <div className="mt-4 mb-2 w-full flex-1 px-4 flex">
@@ -182,6 +176,35 @@ export default function ExperiencePage() {
           )}
         </button>
       </div>
+
+      {isSelectingGender && (
+        <div className="fixed bottom-0 left-0 w-full flex justify-center pb-3 px-4 pointer-events-none">
+          <div className="w-full max-w-[393px] pointer-events-auto">
+            <div className="rounded-[20px] bg-white p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+              <div className="text-[14px] font-medium mb-3 text-center">
+                Уточните, от какого лица пишем отзыв
+              </div>
+
+              <div className="flex gap-3">
+                {GENDER_OPTIONS.map(option => (
+                  <button
+                    key={option.key}
+                    disabled={isSaving}
+                    onClick={() => handleSelectGender(option.key)}
+                    className="flex-1 h-12 rounded-full bg-gray-100 text-[14px] flex items-center justify-center"
+                  >
+                    {isSaving && selectedGender === option.key ? (
+                      <div className="w-5 h-5 animate-spin rounded-full border-2 border-black border-t-transparent" />
+                    ) : (
+                      option.label
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

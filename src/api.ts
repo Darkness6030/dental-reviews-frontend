@@ -30,9 +30,7 @@ export const getServices = async (): Promise<Service[]> => {
   return data
 }
 
-export const getServicesByDoctorIds = async (
-  doctorIds: number[]
-): Promise<Service[]> => {
+export const getServicesByDoctorIds = async (doctorIds: number[]): Promise<Service[]> => {
   const { data } = await client.get("/services/doctors", {
     params: { doctor_ids: doctorIds },
     paramsSerializer: params => qs.stringify(params, { arrayFormat: "repeat" }),
@@ -117,6 +115,16 @@ export const setReviewSource = async (
 ): Promise<Review> => {
   const { data } = await client.post(`/reviews/${reviewId}/source`, {
     source_id: sourceId,
+  })
+  return data
+}
+
+export const setReviewGender = async (
+  reviewId: number,
+  gender: string
+): Promise<Review> => {
+  const { data } = await client.post(`/reviews/${reviewId}/gender`, {
+    gender,
   })
   return data
 }

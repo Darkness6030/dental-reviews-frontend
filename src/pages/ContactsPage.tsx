@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { setReviewContacts } from "../api"
-import CopiedToast from "../components/CopiedToast"
 import { Loader } from "../components/Loader"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
+import CopiedIcon from "../icons/copied.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Reward } from "../types"
@@ -15,17 +15,19 @@ type Context = {
   setContactName: (name: string) => void
   contactPhone: string
   setContactPhone: (phone: string) => void
+  isCopied: boolean
+  setIsCopied: (value: boolean) => void
 }
 
 export default function ContactsPage() {
   const navigate = useNavigate()
-  const copyTimeoutRef = useRef<number | null>(null)
-
   const {
     contactName,
     setContactName,
     contactPhone,
-    setContactPhone
+    setContactPhone,
+    isCopied,
+    setIsCopied
   } = useOutletContext<Context>()
 
   const [reviewText, setReviewText] = useState("")
@@ -36,7 +38,6 @@ export default function ContactsPage() {
   const [isPhoneVisible, setIsPhoneVisible] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [isCopied, setIsCopied] = useState(false)
 
   const isPhoneCompleted = /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
 
@@ -62,33 +63,7 @@ export default function ContactsPage() {
   const handleCopyReview = async () => {
     await navigator.clipboard.writeText(reviewText)
     setIsCopied(true)
-
-    if (copyTimeoutRef.current) {
-      clearTimeout(copyTimeoutRef.current)
-    }
-
-    copyTimeoutRef.current = window.setTimeout(() => {
-      setIsCopied(false)
-      copyTimeoutRef.current = null
-    }, 2000)
   }
-
-  const handleCloseToast = () => {
-    if (copyTimeoutRef.current) {
-      clearTimeout(copyTimeoutRef.current)
-      copyTimeoutRef.current = null
-    }
-
-    setIsCopied(false)
-  }
-
-  useEffect(() => {
-    return () => {
-      if (copyTimeoutRef.current) {
-        clearTimeout(copyTimeoutRef.current)
-      }
-    }
-  }, [])
 
   const handleNext = async () => {
     if (isSaving || !isPhoneCompleted) return
@@ -147,6 +122,21 @@ export default function ContactsPage() {
             </button>
           </div>
         </div>
+      </div>
+
+      <div className="mt-2 flex w-full items-center gap-2 px-4 justify-start h-6">
+        {isCopied ? (
+          <>
+            <CopiedIcon className="w-6 h-6" />
+            <span className="text-[13px] font-medium leading-[120%] tracking-[-0.02em] text-[#F39416]">
+              Отзыв скопирован
+            </span>
+          </>
+        ) : (
+          <span className="text-[13px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
+            Не забудьте скопировать готовый отзыв ⬆️
+          </span>
+        )}
       </div>
 
       <div className="flex flex-1 flex-col">
@@ -307,8 +297,6 @@ export default function ContactsPage() {
           )}
         </button>
       </div>
-
-      {isCopied && <CopiedToast onClose={handleCloseToast} />}
     </div>
   )
 }

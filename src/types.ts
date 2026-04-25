@@ -1,8 +1,8 @@
 export type Feedback = boolean | null
 export type StylePreset =
-  | "basic"
-  | "short"
-  | "friendly"
+    | "basic"
+    | "short"
+    | "friendly"
 
 export type User = {
     id: number
@@ -64,7 +64,8 @@ export type Review = {
     contact_phone?: string
     experience_text?: string
     review_text?: string
-    generations_left: number
+    generations_spent: number
+    generations_limit: number
     selected_doctors: Doctor[]
     selected_services: Service[]
     selected_aspects: Aspect[]
