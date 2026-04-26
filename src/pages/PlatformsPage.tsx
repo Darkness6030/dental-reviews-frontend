@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { addReviewPlatform, getPlatforms } from "../api"
 import { Loader } from "../components/Loader"
 import ArrowRightIcon from "../icons/arrow_right.svg?react"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
-import CopyIcon from "../icons/copy.svg?react"
 import CopiedIcon from "../icons/copied.svg?react"
+import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Platform } from "../types"
 import { loadReview } from "../utils/storage"
@@ -59,7 +59,7 @@ export function PlatformsPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+    <div className="flex min-h-full flex-col items-center bg-[#F5F5F5]">
       <div className="flex w-full flex-col gap-3 px-4 pt-4 shrink-0">
         <div className="flex w-full items-start gap-3">
           <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">

@@ -84,7 +84,7 @@ export function ComplaintPage() {
 
   if (isSubmitted) {
     return (
-      <div className="flex min-h-screen justify-center bg-[#F5F5F5]">
+      <div className="flex min-h-full justify-center bg-[#F5F5F5]">
         <div className="flex w-full flex-col justify-center gap-3 px-4">
           <div className="flex w-full items-start gap-3">
             <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
@@ -107,7 +107,7 @@ export function ComplaintPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+    <div className="flex min-h-full flex-col items-center bg-[#F5F5F5]">
       <div className="w-full rounded-b-[32px] bg-white shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
         <div className="flex flex-col gap-4 p-4">
           <h1 className="text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">

@@ -83,7 +83,7 @@ export function ServicesPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+    <div className="flex min-h-full flex-col items-center bg-[#F5F5F5]">
       <div className="flex w-full flex-col gap-3 px-4 pt-4">
         <div className="flex items-start gap-3">
           <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">

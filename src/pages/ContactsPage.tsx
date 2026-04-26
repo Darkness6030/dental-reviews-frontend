@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { setReviewContacts } from "../api"
 import { Loader } from "../components/Loader"
@@ -36,8 +36,10 @@ export function ContactsPage() {
   const [isEditingName, setIsEditingName] = useState(true)
   const [isEditingPhone, setIsEditingPhone] = useState(true)
   const [isPhoneVisible, setIsPhoneVisible] = useState(false)
+  const [showCopyWarning, setShowCopyWarning] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
+
 
   const isPhoneCompleted = /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
 
@@ -66,7 +68,13 @@ export function ContactsPage() {
   }
 
   const handleNext = async () => {
-    if (isSaving || !isPhoneCompleted) return
+    if (isSaving || !isPhoneCompleted || !isCopied) {
+      if (!isCopied) {
+        setShowCopyWarning(true)
+      }
+      return
+    }
+
     setIsSaving(true)
 
     try {
@@ -78,8 +86,18 @@ export function ContactsPage() {
     }
   }
 
+  useEffect(() => {
+    if (!showCopyWarning) return
+
+    const timeout = setTimeout(() => {
+      setShowCopyWarning(false)
+    }, 2500)
+
+    return () => clearTimeout(timeout)
+  }, [showCopyWarning])
+
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+    <div className="flex min-h-full flex-col items-center bg-[#F5F5F5]">
       <div className="flex w-full flex-col gap-3 px-4 pt-4 shrink-0">
         <div className="flex w-full items-start gap-3">
           <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
@@ -140,33 +158,35 @@ export function ContactsPage() {
       </div>
 
       <div className="flex flex-1 flex-col">
-        <div className="mt-6 flex w-full flex-col gap-2 px-4">
-          <h2 className="text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
-            Вы выбрали
-          </h2>
+        {(isLoading || selectedReward) && (
+          <div className="mt-6 flex w-full flex-col gap-2 px-4">
+            <h2 className="text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
+              Вы выбрали
+            </h2>
 
-          {isLoading ? (
-            <div className="flex min-h-[72px] w-full items-center justify-center">
-              <Loader />
-            </div>
-          ) : (
-            selectedReward && (
-              <div className="flex min-h-[72px] w-full items-center gap-3 rounded-[24px] bg-[#131927] p-1 text-white shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
-                <div className="flex w-16 h-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-[#F2F2F2]">
-                  <img
-                    src={selectedReward.image_url ?? "/placeholder.png"}
-                    alt={selectedReward.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <span className="text-left text-[15px] font-medium leading-[120%] tracking-[-0.02em]">
-                  {selectedReward.name}
-                </span>
+            {isLoading ? (
+              <div className="flex min-h-[72px] w-full items-center justify-center">
+                <Loader />
               </div>
-            )
-          )}
-        </div>
+            ) : (
+              selectedReward && (
+                <div className="flex min-h-[72px] w-full items-center gap-3 rounded-[24px] bg-[#131927] p-1 text-white shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
+                  <div className="flex w-16 h-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-[#F2F2F2]">
+                    <img
+                      src={selectedReward.image_url ?? "/placeholder.png"}
+                      alt={selectedReward.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <span className="text-left text-[15px] font-medium leading-[120%] tracking-[-0.02em]">
+                    {selectedReward.name}
+                  </span>
+                </div>
+              )
+            )}
+          </div>
+        )}
 
         <div className="mt-6 flex w-full flex-col gap-4 px-4">
           <div className="flex flex-col gap-3">
@@ -297,6 +317,14 @@ export function ContactsPage() {
           )}
         </button>
       </div>
+
+      {showCopyWarning && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <div className="rounded-full bg-[#131927] px-4 py-3 text-white text-[14px] shadow-lg">
+            ❗️Вы не скопировали отзыв
+          </div>
+        </div>
+      )}
     </div>
   )
 }

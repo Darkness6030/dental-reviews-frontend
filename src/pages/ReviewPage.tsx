@@ -16,6 +16,10 @@ const STYLE_PRESET_OPTIONS: { value: StylePreset; label: string }[] = [
   { value: "friendly", label: "🥰 Дружелюбный" }
 ]
 
+const getCacheKey = (stylePreset: StylePreset, useEmojis: boolean) => {
+  return `${stylePreset}_${useEmojis}`
+}
+
 type Context = {
   reviewText: string
   setReviewText: (text: string) => void
@@ -40,7 +44,7 @@ export function ReviewPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [atTop, setAtTop] = useState(true)
   const [atBottom, setAtBottom] = useState(false)
-  const [useEmojis, setUseEmojis] = useState(true)
+  const [useEmojis, setUseEmojis] = useState(false)
 
   const [generationsLeft, setGenerationsLeft] = useState(0)
   const [generationsLimit, setGenerationsLimit] = useState(0)
@@ -57,15 +61,14 @@ export function ReviewPage() {
       setReviewText(reviewText)
       setDraftText(reviewText)
 
-      const generationsLeft = review.generations_limit - review.generations_spent
-      setGenerationsLeft(generationsLeft)
+      setGenerationsLeft(review.generations_limit - review.generations_spent)
       setGenerationsLimit(review.generations_limit)
 
       if (reviewText) {
-        setStyleCache(prev => ({ ...prev, [`basic_${useEmojis}`]: reviewText }))
+        setStyleCache(prev => ({ ...prev, [getCacheKey(stylePreset, useEmojis)]: reviewText }))
         setIsLoading(false)
       } else {
-        handleGenerate("basic")
+        handleGenerate()
       }
     }
 
@@ -87,32 +90,39 @@ export function ReviewPage() {
     handleScroll()
     element.addEventListener("scroll", handleScroll)
 
-    return () => element.removeEventListener("scroll", handleScroll)
-  }, [])
+    const observer = new ResizeObserver(handleScroll)
+    observer.observe(element)
 
-  const handleGenerate = async (
-    newPreset: StylePreset = stylePreset,
-    forceGenerate = false
-  ) => {
+    return () => {
+      element.removeEventListener("scroll", handleScroll)
+      observer.disconnect()
+    }
+  }, [reviewText, isLoading, isEditing])
+
+  useEffect(() => {
     if (!reviewIdRef.current) return
 
-    const cacheKey = `${newPreset}_${useEmojis}`
-    if (!forceGenerate && styleCache[cacheKey]) {
-      setStylePreset(newPreset)
-      setReviewText(styleCache[cacheKey])
-      setDraftText(styleCache[cacheKey])
+    const cachedText = styleCache[getCacheKey(stylePreset, useEmojis)]
+    if (cachedText) {
+      setReviewText(cachedText)
+      setDraftText(cachedText)
       setIsEditing(false)
       return
     }
 
+    handleGenerate()
+  }, [stylePreset, useEmojis])
+
+  const handleGenerate = async () => {
+    if (!reviewIdRef.current) return
+
     setIsLoading(true)
     setIsEditing(false)
-    setStylePreset(newPreset)
 
     try {
       const generated = await generateReviewText(
         reviewIdRef.current,
-        newPreset,
+        stylePreset,
         useEmojis
       )
 
@@ -120,13 +130,13 @@ export function ReviewPage() {
       setReviewText(reviewText)
       setDraftText(reviewText)
 
+      const cacheKey = getCacheKey(stylePreset, useEmojis)
       setStyleCache(prev => ({
         ...prev,
         [cacheKey]: reviewText
       }))
 
-      const generationsLeft = generated.generations_limit - generated.generations_spent
-      setGenerationsLeft(generationsLeft)
+      setGenerationsLeft(generated.generations_limit - generated.generations_spent)
       setGenerationsLimit(generated.generations_limit)
     } finally {
       setIsLoading(false)
@@ -140,7 +150,7 @@ export function ReviewPage() {
     try {
       await updateReviewText(reviewIdRef.current, draftText)
       setReviewText(draftText)
-      setStyleCache(prev => ({ ...prev, [`${stylePreset}_${useEmojis}`]: draftText }))
+      setStyleCache(prev => ({ ...prev, [getCacheKey(stylePreset, useEmojis)]: draftText }))
       setIsEditing(false)
     } finally {
       setIsSaving(false)
@@ -184,24 +194,23 @@ export function ReviewPage() {
 
       <div className="mt-4 flex min-h-0 w-full flex-1 px-4">
         <div
-          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
-            ${isLoading ? "mb-6" : "overflow-hidden"}`}
+          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${isLoading ? "mb-6" : "overflow-hidden"}`}
         >
           {!isEditing && (
             <>
               <div className="mb-2 flex gap-2">
                 {STYLE_PRESET_OPTIONS.map(option => {
-                  const disabled = isLoading || !generationsLeft
+                  const isDisabled = isLoading || !generationsLeft
                   return (
                     <button
                       key={option.value}
-                      onClick={() => handleGenerate(option.value)}
-                      disabled={disabled}
+                      onClick={() => setStylePreset(option.value)}
+                      disabled={isDisabled}
                       className={`flex-1 whitespace-nowrap rounded-full px-2 py-1.5 text-center text-[12px]
                         ${stylePreset === option.value
                           ? "bg-[#131927] text-white"
                           : "bg-[#F0F0F0]"
-                        } ${disabled ? "cursor-not-allowed opacity-30" : ""}`}
+                        } ${isDisabled ? "cursor-not-allowed opacity-30" : ""}`}
                     >
                       {option.label}
                     </button>
@@ -216,7 +225,8 @@ export function ReviewPage() {
 
                 <Switch
                   checked={useEmojis}
-                  handleChange={() => setUseEmojis(!useEmojis)}
+                  handleChange={() => setUseEmojis(prev => !prev)}
+                  disabled={isLoading || !generationsLeft}
                 />
               </div>
             </>
@@ -242,17 +252,19 @@ export function ReviewPage() {
             />
           ) : (
             <>
-              <div
-                ref={scrollContainerRef}
-                className="relative flex h-full min-h-0 flex-1 overflow-y-auto"
-              >
-                <p className="text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]">
-                  {reviewText}
-                </p>
+              <div className="relative flex h-full min-h-0 flex-1 overflow-hidden">
+                <div
+                  ref={scrollContainerRef}
+                  className="h-full w-full overflow-y-auto"
+                >
+                  <p className="text-[15px] leading-[140%] tracking-[-0.02em] text-[#131927]">
+                    {reviewText}
+                  </p>
+                </div>
               </div>
 
               {!atTop && (
-                <div className="pointer-events-none absolute left-6 right-6 top-6 h-8 bg-gradient-to-b from-white to-transparent" />
+                <div className="pointer-events-none absolute top-[5.5rem] left-6 right-6 h-8 bg-gradient-to-b from-white to-transparent" />
               )}
 
               {!atBottom && (
@@ -278,15 +290,14 @@ export function ReviewPage() {
           {!isEditing ? (
             <>
               <button
-                onClick={() => handleGenerate(stylePreset, true)}
+                onClick={handleGenerate}
                 disabled={!generationsLeft}
                 className={`flex items-center gap-2
                   ${!generationsLeft ? "opacity-20" : ""}`}
               >
                 <AIGenerateIcon className="h-5 w-5 text-[#131927]" />
                 <span className="text-[15px]">
-                  Сгенерировать ещё ({generationsLeft}/
-                  {generationsLimit})
+                  Сгенерировать ещё ({generationsLeft}/{generationsLimit})
                 </span>
               </button>
 

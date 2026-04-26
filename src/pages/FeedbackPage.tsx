@@ -31,7 +31,7 @@ export function FeedbackPage() {
   }, [])
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-[#F5F5F5]">
+    <div className="flex min-h-full flex-col items-center bg-[#F5F5F5]">
       <div className="flex w-full flex-col items-center gap-6 px-6 pt-6">
         <img src="/logo.png" alt="Dental Daily Logo" className="h-6" />
 

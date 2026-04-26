@@ -19,8 +19,8 @@ export function App() {
   const [isCopied, setIsCopied] = useState(false)
 
   return (
-    <div className="w-full min-h-screen bg-[#F5F5F5] flex justify-center">
-      <div className="w-full max-w-[393px] min-h-screen">
+    <div className="w-full min-h-[100dvh] bg-[#F5F5F5] flex justify-center">
+      <div className="w-full max-w-[393px] min-h-full">
         <Outlet
           context={{
             feedback,
