@@ -18,6 +18,7 @@ export const router = createBrowserRouter([
         element: <App />,
         children: [
             { index: true, element: <FeedbackPage /> },
+            { path: "doctor/:doctorId", element: <FeedbackPage /> },
             { path: "complaint", element: <ComplaintPage /> },
             { path: "doctors", element: <DoctorsPage /> },
             { path: "services", element: <ServicesPage /> },

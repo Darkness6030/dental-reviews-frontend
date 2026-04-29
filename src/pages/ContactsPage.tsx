@@ -1,16 +1,18 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { setReviewContacts } from "../api"
 import { Loader } from "../components/Loader"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
 import CopiedIcon from "../icons/copied.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
-import type { Reward } from "../types"
+import type { Review, Reward } from "../types"
 import { formatPhone } from "../utils/phone"
-import { loadReview } from "../utils/storage"
 
 type Context = {
+  currentReview: Review
+  isReviewLoading: boolean
   contactName: string
   setContactName: (name: string) => void
   contactPhone: string
@@ -21,7 +23,11 @@ type Context = {
 
 export function ContactsPage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient();
+
   const {
+    currentReview,
+    isReviewLoading,
     contactName,
     setContactName,
     contactPhone,
@@ -37,63 +43,65 @@ export function ContactsPage() {
   const [isEditingPhone, setIsEditingPhone] = useState(true)
   const [isPhoneVisible, setIsPhoneVisible] = useState(false)
   const [showCopyWarning, setShowCopyWarning] = useState(false)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-
 
   const isPhoneCompleted = /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
 
   useEffect(() => {
-    if (reviewText && selectedReward) return
+    if (!currentReview) return
+    setReviewText(currentReview.review_text ?? "")
+    setSelectedReward(currentReview.selected_reward ?? null)
 
-    const loadReviewData = async () => {
-      try {
-        const review = await loadReview()
-        if (review.review_text) {
-          setReviewText(review.review_text)
-        }
-
-        setSelectedReward(review.selected_reward ?? null)
-      } finally {
-        setIsLoading(false)
-      }
+    if (currentReview.contact_name) {
+      setContactName(currentReview.contact_name)
+      setIsEditingName(false)
+      setIsPhoneVisible(true)
+      setIsEditingPhone(true)
     }
 
-    loadReviewData()
-  }, [])
+    if (currentReview.contact_phone) {
+      setContactPhone(formatPhone(currentReview.contact_phone))
+      setIsEditingPhone(false)
+    }
+  }, [currentReview])
+
+  const mutation = useMutation({
+    mutationFn: () => setReviewContacts(currentReview.id, contactName, contactPhone),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      navigate("/platforms")
+    }
+  })
 
   const handleCopyReview = async () => {
     await navigator.clipboard.writeText(reviewText)
     setIsCopied(true)
   }
 
-  const handleNext = async () => {
-    if (isSaving || !isPhoneCompleted || !isCopied) {
-      if (!isCopied) {
-        setShowCopyWarning(true)
-      }
+  const handleNext = () => {
+    if (!isCopied) {
+      setShowCopyWarning(true)
       return
     }
 
-    setIsSaving(true)
+    if (mutation.isPending || !isPhoneCompleted) return
+    mutation.mutate()
+  }
 
-    try {
-      const review = await loadReview()
-      await setReviewContacts(review.id, contactName, contactPhone)
-      navigate("/platforms")
-    } finally {
-      setIsSaving(false)
+  const handleSkip = () => {
+    if (!isCopied) {
+      setShowCopyWarning(true)
+      return
     }
+
+    queryClient.invalidateQueries()
+    navigate("/platforms")
   }
 
   useEffect(() => {
-    if (!showCopyWarning) return
-
-    const timeout = setTimeout(() => {
-      setShowCopyWarning(false)
-    }, 2500)
-
-    return () => clearTimeout(timeout)
+    if (showCopyWarning) {
+      const timeout = setTimeout(() => setShowCopyWarning(false), 2500)
+      return () => clearTimeout(timeout)
+    }
   }, [showCopyWarning])
 
   return (
@@ -117,28 +125,34 @@ export function ContactsPage() {
       </div>
 
       <div className="mt-4 w-full px-4 shrink-0">
-        <div className="flex gap-2 rounded-[24px] bg-white p-1 shadow-[0_0_4px_rgba(0,0,0,0.04)]">
-          <div className="flex-1 overflow-hidden px-3 py-2">
-            <p className="line-clamp-4 text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] opacity-80">
-              {reviewText}
-            </p>
-          </div>
+        <div className="flex min-h-[104px] items-center justify-center gap-2 rounded-[24px] bg-white p-1 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
+          {isReviewLoading ? (
+            <Loader />
+          ) : (
+            <>
+              <div className="flex-1 overflow-hidden px-3 py-2">
+                <p className="line-clamp-4 text-[14px] leading-[140%] tracking-[-0.02em] text-[#131927] opacity-80">
+                  {reviewText}
+                </p>
+              </div>
 
-          <div className="flex w-12 flex-col shrink-0">
-            <button
-              onClick={() => navigate("/review")}
-              className="flex w-12 h-12 items-center justify-center rounded-t-[20px] border-b border-white bg-[#EEEEEE]"
-            >
-              <PencilIcon className="w-[18px] h-[18px]" />
-            </button>
+              <div className="flex w-12 flex-col shrink-0">
+                <button
+                  onClick={() => navigate("/review")}
+                  className="flex w-12 h-12 items-center justify-center rounded-t-[20px] border-b border-white bg-[#EEEEEE]"
+                >
+                  <PencilIcon className="w-[18px] h-[18px]" />
+                </button>
 
-            <button
-              onClick={handleCopyReview}
-              className="flex w-12 h-12 items-center justify-center rounded-b-[20px] bg-[#EEEEEE]"
-            >
-              <CopyIcon className="w-[18px] h-[18px]" />
-            </button>
-          </div>
+                <button
+                  onClick={handleCopyReview}
+                  className="flex w-12 h-12 items-center justify-center rounded-b-[20px] bg-[#EEEEEE]"
+                >
+                  <CopyIcon className="w-[18px] h-[18px]" />
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -157,14 +171,14 @@ export function ContactsPage() {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col">
-        {(isLoading || selectedReward) && (
+      <div className="flex flex-1 flex-col w-full">
+        {(isReviewLoading || selectedReward) && (
           <div className="mt-6 flex w-full flex-col gap-2 px-4">
             <h2 className="text-[24px] font-medium leading-[110%] tracking-[-0.02em] text-[#131927]">
               Вы выбрали
             </h2>
 
-            {isLoading ? (
+            {isReviewLoading ? (
               <div className="flex min-h-[72px] w-full items-center justify-center">
                 <Loader />
               </div>
@@ -200,82 +214,40 @@ export function ContactsPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <div className="flex h-[70px] w-full items-center rounded-[24px] bg-white p-1">
-              <div className="flex w-full flex-col justify-center px-3">
-                {isEditingName ? (
-                  <input
-                    autoFocus
-                    value={contactName}
-                    onChange={event => setContactName(event.target.value)}
-                    onBlur={() => {
-                      if (contactName) {
-                        setIsEditingName(false)
-                        setIsPhoneVisible(true)
-                        setIsEditingPhone(true)
-                      }
-                    }}
-                    onKeyDown={event => {
-                      if (event.key === "Enter" && contactName) {
-                        event.currentTarget.blur()
-                      }
-                    }}
-                    placeholder="Ваше имя"
-                    className="w-full bg-transparent text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927] outline-none placeholder:text-[#131927]/30"
-                  />
-                ) : (
-                  <div className="flex items-center justify-between">
-                    <span className="text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927]">
-                      {contactName}
-                    </span>
-
-                    <button onClick={() => setIsEditingName(true)}>
-                      <PencilIcon className="w-5 h-5" />
-                    </button>
-                  </div>
-                )}
+            {isReviewLoading ? (
+              <div className="flex min-h-[150px] w-full items-center justify-center">
+                <Loader />
               </div>
-            </div>
-
-            {isPhoneVisible && (
+            ) : (
               <>
                 <div className="flex h-[70px] w-full items-center rounded-[24px] bg-white p-1">
                   <div className="flex w-full flex-col justify-center px-3">
-                    {isEditingPhone ? (
+                    {isEditingName ? (
                       <input
                         autoFocus
-                        value={contactPhone}
-                        onFocus={() => {
-                          if (!contactPhone) setContactPhone("+7")
-                        }}
-                        onChange={event =>
-                          setContactPhone(formatPhone(event.target.value))
-                        }
-                        onKeyDown={event => {
-                          if (event.key === "Backspace" && contactPhone === "+7") {
-                            event.preventDefault()
+                        value={contactName}
+                        onChange={event => setContactName(event.target.value)}
+                        onBlur={() => {
+                          if (contactName) {
+                            setIsEditingName(false)
+                            setIsPhoneVisible(true)
+                            setIsEditingPhone(true)
                           }
-
-                          if (event.key === "Enter" && contactPhone.length > 2) {
+                        }}
+                        onKeyDown={event => {
+                          if (event.key === "Enter" && contactName) {
                             event.currentTarget.blur()
                           }
                         }}
-                        onBlur={() => {
-                          if (contactPhone === "+7") {
-                            setContactPhone("")
-                          } else {
-                            setIsEditingPhone(false)
-                          }
-                        }}
-                        placeholder="+7 ___ ___ __ __"
+                        placeholder="Ваше имя"
                         className="w-full bg-transparent text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927] outline-none placeholder:text-[#131927]/30"
                       />
                     ) : (
                       <div className="flex items-center justify-between">
                         <span className="text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927]">
-                          {contactPhone}
+                          {contactName}
                         </span>
-
-                        <button onClick={() => setIsEditingPhone(true)}>
+                        <button onClick={() => setIsEditingName(true)}>
                           <PencilIcon className="w-5 h-5" />
                         </button>
                       </div>
@@ -283,10 +255,55 @@ export function ContactsPage() {
                   </div>
                 </div>
 
-                <p className="text-[14px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
-                  Мы никому не передадим ваш номер. Он необходим исключительно для внутренней системы закрепления подарка 😊
-                </p>
+                {isPhoneVisible && (
+                  <div className="flex h-[70px] w-full items-center rounded-[24px] bg-white p-1">
+                    <div className="flex w-full flex-col justify-center px-3">
+                      {isEditingPhone ? (
+                        <input
+                          autoFocus
+                          value={contactPhone}
+                          onFocus={() => {
+                            if (!contactPhone) setContactPhone("+7")
+                          }}
+                          onChange={event => setContactPhone(formatPhone(event.target.value))}
+                          onKeyDown={event => {
+                            if (event.key === "Backspace" && contactPhone === "+7") {
+                              event.preventDefault()
+                            }
+                            if (event.key === "Enter" && contactPhone.length > 2) {
+                              event.currentTarget.blur()
+                            }
+                          }}
+                          onBlur={() => {
+                            if (contactPhone === "+7") {
+                              setContactPhone("")
+                            } else {
+                              setIsEditingPhone(false)
+                            }
+                          }}
+                          placeholder="+7 ___ ___ __ __"
+                          className="w-full bg-transparent text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927] outline-none placeholder:text-[#131927]/30"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <span className="text-[30px] leading-[36px] tracking-[-0.02em] text-[#131927]">
+                            {contactPhone}
+                          </span>
+                          <button onClick={() => setIsEditingPhone(true)}>
+                            <PencilIcon className="w-5 h-5" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </>
+            )}
+
+            {!isReviewLoading && isPhoneVisible && (
+              <p className="text-[14px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
+                Мы никому не передадим ваш номер. Он необходим исключительно для внутренней системы закрепления подарка 😊
+              </p>
             )}
 
             <p className="text-[10px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
@@ -298,19 +315,19 @@ export function ContactsPage() {
 
       <div className="flex w-full items-end justify-between px-4 py-3 shrink-0">
         <button
-          disabled={isSaving}
-          onClick={() => navigate("/platforms")}
+          disabled={mutation.isPending}
+          onClick={handleSkip}
           className="flex h-14 items-center text-[15px] tracking-[-0.02em] text-[#131927] disabled:opacity-30"
         >
           Продолжить без подарка
         </button>
 
         <button
-          disabled={!isPhoneCompleted || isEditingPhone || isSaving}
+          disabled={!isPhoneCompleted || isEditingPhone || mutation.isPending}
           onClick={handleNext}
           className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)] disabled:opacity-30"
         >
-          {isSaving ? (
+          {mutation.isPending ? (
             <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             "Далее"
@@ -320,7 +337,7 @@ export function ContactsPage() {
 
       {showCopyWarning && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
-          <div className="rounded-full bg-[#131927] px-4 py-3 text-white text-[14px] shadow-lg">
+          <div className="rounded-full bg-[#131927] px-4 py-3 text-white text-[14px] shadow-lg whitespace-nowrap">
             ❗️Вы не скопировали отзыв
           </div>
         </div>

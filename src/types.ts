@@ -66,6 +66,7 @@ export type Review = {
     review_text?: string
     generations_spent: number
     generations_limit: number
+    target_doctor?: Doctor
     selected_doctors: Doctor[]
     selected_services: Service[]
     selected_aspects: Aspect[]

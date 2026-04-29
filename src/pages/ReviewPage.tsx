@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { generateReviewText, updateReviewText } from "../api"
 import { Loader } from "../components/Loader"
 import { Switch } from "../components/Switch"
@@ -7,8 +8,7 @@ import AIGenerateIcon from "../icons/ai_generate.svg?react"
 import CancelIcon from "../icons/cancel.svg?react"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
-import type { StylePreset } from "../types"
-import { loadReview } from "../utils/storage"
+import type { Review, StylePreset } from "../types"
 
 const STYLE_PRESET_OPTIONS: { value: StylePreset; label: string }[] = [
   { value: "basic", label: "🤝 Базовый" },
@@ -21,6 +21,7 @@ const getCacheKey = (stylePreset: StylePreset, useEmojis: boolean) => {
 }
 
 type Context = {
+  currentReview: Review
   reviewText: string
   setReviewText: (text: string) => void
   draftText: string
@@ -29,18 +30,17 @@ type Context = {
 
 export function ReviewPage() {
   const navigate = useNavigate()
-  const reviewIdRef = useRef<number | null>(null)
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+  const queryClient = useQueryClient()
 
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null)
   const {
+    currentReview,
     reviewText,
     setReviewText,
     draftText,
     setDraftText
   } = useOutletContext<Context>()
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [atTop, setAtTop] = useState(true)
   const [atBottom, setAtBottom] = useState(false)
@@ -52,55 +52,58 @@ export function ReviewPage() {
   const [stylePreset, setStylePreset] = useState<StylePreset>("basic")
   const [styleCache, setStyleCache] = useState<Record<string, string>>({})
 
-  useEffect(() => {
-    const loadReviewData = async () => {
-      const review = await loadReview()
-      reviewIdRef.current = review.id
+  const generateMutation = useMutation({
+    mutationFn: () => generateReviewText(currentReview.id, stylePreset, useEmojis),
+    onSuccess: (data) => {
+      const newText = data.review_text ?? ""
+      setReviewText(newText)
+      setDraftText(newText)
 
-      const reviewText = review.review_text ?? ""
-      setReviewText(reviewText)
-      setDraftText(reviewText)
+      const cacheKey = getCacheKey(stylePreset, useEmojis)
+      setStyleCache(prev => ({ ...prev, [cacheKey]: newText }))
 
-      setGenerationsLeft(review.generations_limit - review.generations_spent)
-      setGenerationsLimit(review.generations_limit)
+      setGenerationsLeft(data.generations_limit - data.generations_spent)
+      setGenerationsLimit(data.generations_limit)
 
-      if (reviewText) {
-        setStyleCache(prev => ({ ...prev, [getCacheKey(stylePreset, useEmojis)]: reviewText }))
-        setIsLoading(false)
-      } else {
-        handleGenerate()
-      }
+      setIsEditing(false)
+      queryClient.invalidateQueries()
     }
+  })
 
-    loadReviewData()
-  }, [])
+  const saveEditMutation = useMutation({
+    mutationFn: () => updateReviewText(currentReview.id, draftText),
+    onSuccess: (updatedReview) => {
+      const newText = updatedReview.review_text ?? ""
+      setReviewText(newText)
+      setDraftText(newText)
 
-  useEffect(() => {
-    const element = scrollContainerRef.current
-    if (!element) return
+      const cacheKey = getCacheKey(stylePreset, useEmojis)
+      setStyleCache(prev => ({ ...prev, [cacheKey]: newText }))
 
-    const handleScroll = () => {
-      setAtTop(element.scrollTop === 0)
-      setAtBottom(
-        element.scrollTop + element.clientHeight >=
-        element.scrollHeight - 1
-      )
+      setIsEditing(false)
+      queryClient.invalidateQueries()
     }
-
-    handleScroll()
-    element.addEventListener("scroll", handleScroll)
-
-    const observer = new ResizeObserver(handleScroll)
-    observer.observe(element)
-
-    return () => {
-      element.removeEventListener("scroll", handleScroll)
-      observer.disconnect()
-    }
-  }, [reviewText, isLoading, isEditing])
+  })
 
   useEffect(() => {
-    if (!reviewIdRef.current) return
+    if (!currentReview) return
+
+    const initialText = currentReview.review_text ?? ""
+    setReviewText(initialText)
+    setDraftText(initialText)
+
+    setGenerationsLeft(currentReview.generations_limit - currentReview.generations_spent)
+    setGenerationsLimit(currentReview.generations_limit)
+
+    if (initialText) {
+      setStyleCache(prev => ({ ...prev, [getCacheKey(stylePreset, useEmojis)]: initialText }))
+    } else {
+      generateMutation.mutate()
+    }
+  }, [currentReview])
+
+  useEffect(() => {
+    if (!currentReview) return
 
     const cachedText = styleCache[getCacheKey(stylePreset, useEmojis)]
     if (cachedText) {
@@ -110,51 +113,34 @@ export function ReviewPage() {
       return
     }
 
-    handleGenerate()
+    if (currentReview.id) {
+      generateMutation.mutate()
+    }
   }, [stylePreset, useEmojis])
 
-  const handleGenerate = async () => {
-    if (!reviewIdRef.current) return
+  useEffect(() => {
+    const element = scrollContainerRef.current
+    if (!element) return
 
-    setIsLoading(true)
-    setIsEditing(false)
-
-    try {
-      const generated = await generateReviewText(
-        reviewIdRef.current,
-        stylePreset,
-        useEmojis
-      )
-
-      const reviewText = generated.review_text ?? ""
-      setReviewText(reviewText)
-      setDraftText(reviewText)
-
-      const cacheKey = getCacheKey(stylePreset, useEmojis)
-      setStyleCache(prev => ({
-        ...prev,
-        [cacheKey]: reviewText
-      }))
-
-      setGenerationsLeft(generated.generations_limit - generated.generations_spent)
-      setGenerationsLimit(generated.generations_limit)
-    } finally {
-      setIsLoading(false)
+    const handleScroll = () => {
+      setAtTop(element.scrollTop === 0)
+      setAtBottom(element.scrollTop + element.clientHeight >= element.scrollHeight - 1)
     }
-  }
 
-  const handleSaveEdit = async () => {
-    if (isSaving || !reviewIdRef.current) return
-    setIsSaving(true)
+    handleScroll()
+    element.addEventListener("scroll", handleScroll)
+    const observer = new ResizeObserver(handleScroll)
+    observer.observe(element)
 
-    try {
-      await updateReviewText(reviewIdRef.current, draftText)
-      setReviewText(draftText)
-      setStyleCache(prev => ({ ...prev, [getCacheKey(stylePreset, useEmojis)]: draftText }))
-      setIsEditing(false)
-    } finally {
-      setIsSaving(false)
+    return () => {
+      element.removeEventListener("scroll", handleScroll)
+      observer.disconnect()
     }
+  }, [reviewText, isEditing])
+
+  const handleSaveEdit = () => {
+    if (saveEditMutation.isPending) return
+    saveEditMutation.mutate()
   }
 
   return (
@@ -164,14 +150,14 @@ export function ReviewPage() {
           <h1 className="flex-1 text-[36px] font-semibold leading-[90%] tracking-[-0.02em] text-[#131927]">
             {isEditing
               ? <>Редактировать<br />отзыв</>
-              : isLoading ?
+              : generateMutation.isPending ?
                 <>Пишем<br />отзыв…</> :
                 <>Отзыв<br />сгенерирован</>
             }
           </h1>
 
           {!isEditing &&
-            (isLoading ? (
+            (generateMutation.isPending ? (
               <Loader />
             ) : (
               <div className="flex h-16 w-16 items-center justify-center p-[6px]">
@@ -185,7 +171,7 @@ export function ReviewPage() {
         <p className="text-[14px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
           {isEditing
             ? "Вы можете изменить текст отзыва"
-            : isLoading
+            : generateMutation.isPending
               ? "Чтобы он был интересным и информативным"
               : "Но при желании вы можете его изменить"
           }
@@ -194,13 +180,14 @@ export function ReviewPage() {
 
       <div className="mt-4 flex min-h-0 w-full flex-1 px-4">
         <div
-          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)] ${isLoading ? "mb-6" : "overflow-hidden"}`}
+          className={`relative flex w-full flex-1 flex-col rounded-[24px] bg-white p-6 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]
+            ${generateMutation.isPending ? "mb-6" : "overflow-hidden"}`}
         >
           {!isEditing && (
             <>
               <div className="mb-2 flex gap-2">
                 {STYLE_PRESET_OPTIONS.map(option => {
-                  const isDisabled = isLoading || !generationsLeft
+                  const isDisabled = generateMutation.isPending || !generationsLeft
                   return (
                     <button
                       key={option.value}
@@ -226,20 +213,20 @@ export function ReviewPage() {
                 <Switch
                   checked={useEmojis}
                   handleChange={() => setUseEmojis(prev => !prev)}
-                  disabled={isLoading || !generationsLeft}
+                  disabled={generateMutation.isPending || !generationsLeft}
                 />
               </div>
             </>
           )}
 
-          {isLoading ? (
+          {generateMutation.isPending ? (
             <div className="flex flex-1 items-center justify-center">
-              <div className="flex h-full w-full max-w-[313px] animate-pulse flex-col justify-between gap-3">
+              <div className="flex h-full w-full animate-pulse flex-col justify-between gap-3">
                 {Array.from({ length: 12 }).map((_, index) => (
                   <div
                     key={index}
                     className={`h-full rounded-full bg-gradient-to-r from-[#F8F8F8] via-[#EDEDED] to-[#F8F8F8]
-                      ${index % 2 ? "w-[150px]" : ""}`}
+                      ${index % 2 ? "w-40" : ""}`}
                   />
                 ))}
               </div>
@@ -285,15 +272,15 @@ export function ReviewPage() {
         </div>
       </div>
 
-      {!isLoading && (
+      {!generateMutation.isPending && (
         <div className="flex w-full shrink-0 items-center justify-between px-4 py-3">
           {!isEditing ? (
             <>
               <button
-                onClick={handleGenerate}
-                disabled={!generationsLeft}
+                onClick={() => generateMutation.mutate()}
+                disabled={generateMutation.isPending || !generationsLeft}
                 className={`flex items-center gap-2
-                  ${!generationsLeft ? "opacity-20" : ""}`}
+                  ${(generateMutation.isPending || !generationsLeft) ? "opacity-20" : ""}`}
               >
                 <AIGenerateIcon className="h-5 w-5 text-[#131927]" />
                 <span className="text-[15px]">
@@ -321,11 +308,11 @@ export function ReviewPage() {
               </button>
 
               <button
-                disabled={isSaving}
+                disabled={saveEditMutation.isPending}
                 onClick={handleSaveEdit}
                 className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold text-white"
               >
-                {isSaving ? (
+                {saveEditMutation.isPending ? (
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
                 ) : (
                   "Сохранить"

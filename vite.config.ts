@@ -9,5 +9,5 @@ export default defineConfig({
       'feedback.ddaily.ru'
     ]
   },
-  base: '',
+  base: '/',
 })

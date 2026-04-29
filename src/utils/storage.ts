@@ -1,21 +1,18 @@
 import type { Review } from "../types"
-import { createReview, getReview } from "../api"
+import { getReview } from "../api"
 
 const reviewIdKey = "review_id"
 
-export const loadReview = async (): Promise<Review> => {
+export const loadReview = async (): Promise<Review | null> => {
   const reviewId = getReviewId()
-  if (reviewId) {
-    try {
-      return await getReview(reviewId)
-    } catch {
-      localStorage.removeItem(reviewIdKey)
-    }
-  }
+  if (!reviewId) return null
 
-  const review = await createReview()
-  localStorage.setItem(reviewIdKey, String(review.id))
-  return review
+  try {
+    return await getReview(reviewId)
+  } catch {
+    clearReviewId()
+    return null
+  }
 }
 
 export const getReviewId = (): number | null => {

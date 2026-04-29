@@ -25,6 +25,11 @@ export const getDoctors = async (): Promise<Doctor[]> => {
   return data
 }
 
+export const getDoctorById = async (doctorId: number): Promise<Doctor> => {
+  const { data } = await client.get(`/doctors/${doctorId}`)
+  return data
+}
+
 export const getServices = async (): Promise<Service[]> => {
   const { data } = await client.get("/services")
   return data
@@ -69,8 +74,10 @@ export const getOwner = async (): Promise<User> => {
   return data
 }
 
-export const createReview = async (): Promise<Review> => {
-  const { data } = await client.post("/reviews")
+export const createReview = async (doctorId?: number): Promise<Review> => {
+  const { data } = await client.post("/reviews", {
+    target_doctor_id: doctorId
+  })
   return data
 }
 

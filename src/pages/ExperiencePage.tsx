@@ -1,13 +1,14 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { setReviewGender, updateReviewExperience } from "../api"
 import { Loader } from "../components/Loader"
+import { PoetryIndex } from "../components/PoetryIndex"
 import { StepProgress } from "../components/StepProgress"
 import AIGenerateIcon from "../icons/ai_generate.svg?react"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
-import { loadReview } from "../utils/storage"
+import type { Review } from "../types"
 import { calculateWordsRate } from "../utils/words"
-import { PoetryIndex } from "../components/PoetryIndex"
 
 const GENDER_OPTIONS = [
   {
@@ -21,22 +22,53 @@ const GENDER_OPTIONS = [
 ]
 
 type Context = {
+  currentReview: Review
+  isReviewLoading: boolean
   experienceText: string
   setExperienceText: (text: string) => void
 }
 
 export function ExperiencePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
   const indexRef = useRef<HTMLDivElement | null>(null)
   const scrollRef = useRef<HTMLTextAreaElement | null>(null)
 
-  const { experienceText, setExperienceText } =
-    useOutletContext<Context>()
+  const {
+    currentReview,
+    isReviewLoading,
+    experienceText,
+    setExperienceText
+  } = useOutletContext<Context>()
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
   const [isSelectingGender, setIsSelectingGender] = useState(false)
   const [selectedGender, setSelectedGender] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!currentReview) return
+    setExperienceText(currentReview.experience_text ?? "")
+  }, [currentReview])
+
+  const experienceMutation = useMutation({
+    mutationFn: () => updateReviewExperience(currentReview.id, experienceText),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      navigate("/review")
+    }
+  })
+
+  const genderMutation = useMutation({
+    mutationFn: async (gender: string) => {
+      setSelectedGender(gender)
+      await setReviewGender(currentReview.id, gender)
+      return updateReviewExperience(currentReview.id, experienceText)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries()
+      navigate("/review")
+    }
+  })
 
   const handleFocus = () => {
     setTimeout(() => {
@@ -47,64 +79,29 @@ export function ExperiencePage() {
     }, 500)
   }
 
-  useEffect(() => {
-    const loadExperienceText = async () => {
-      try {
-        const review = await loadReview()
-        if (review.experience_text) {
-          setExperienceText(review.experience_text)
-        }
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadExperienceText()
-  }, [])
-
-  const wordsRate = useMemo(() => {
-    return calculateWordsRate(experienceText, 30)
-  }, [experienceText])
-
+  const wordsRate = useMemo(() => calculateWordsRate(experienceText, 30), [experienceText])
   const easedRate = wordsRate + (Math.sqrt(wordsRate) - wordsRate) * Math.pow(1 - wordsRate, 3)
+
   const arrowAngle = -120 + easedRate * 240
+  const isGreenZone = easedRate > 0.55
 
-  const handleGenerate = async () => {
-    if (isSaving) return
+  const handleGenerate = () => {
+    if (experienceMutation.isPending || genderMutation.isPending) return
 
-    if (experienceText.trim().length < 100) {
+    if (experienceText.trim().length < 100 && !currentReview.review_text) {
       setIsSelectingGender(true)
       return
     }
 
-    await proceedGenerate()
+    experienceMutation.mutate()
   }
 
-  const handleSelectGender = async (gender: string) => {
-    if (isSaving) return
-
-    setIsSaving(true)
-    setSelectedGender(gender)
-
-    try {
-      const review = await loadReview()
-      await setReviewGender(review.id, gender)
-      await proceedGenerate()
-    } finally {
-      setIsSelectingGender(false)
-    }
+  const handleSelectGender = (gender: string) => {
+    if (genderMutation.isPending) return
+    genderMutation.mutate(gender)
   }
 
-  const proceedGenerate = async () => {
-    setIsSaving(true)
-    try {
-      const review = await loadReview()
-      await updateReviewExperience(review.id, experienceText)
-      navigate("/review")
-    } finally {
-      setIsSaving(false)
-    }
-  }
+  const isSaving = experienceMutation.isPending || genderMutation.isPending
 
   return (
     <div className="flex min-h-full flex-col items-center bg-[#F5F5F5]">
@@ -131,12 +128,12 @@ export function ExperiencePage() {
       </div>
 
       <div ref={indexRef} className="mt-4 w-full px-4">
-        <PoetryIndex arrowAngle={arrowAngle} />
+        <PoetryIndex arrowAngle={arrowAngle} isGreenZone={isGreenZone} />
       </div>
 
       <div className="mt-4 mb-2 w-full flex-1 px-4 flex">
         <div className="relative flex flex-1 flex-col rounded-[24px] bg-white p-4 shadow-[0_0_4px_rgba(0,0,0,0.04),0_4px_8px_rgba(0,0,0,0.06)]">
-          {isLoading ? (
+          {isReviewLoading ? (
             <div className="flex h-full items-center justify-center">
               <Loader />
             </div>
@@ -178,9 +175,9 @@ export function ExperiencePage() {
       </div>
 
       {isSelectingGender && (
-        <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[393px] pb-3 px-4 pointer-events-none">
-          <div className="w-full pointer-events-auto">
-            <div className="rounded-[20px] bg-white p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 px-4 pb-3">
+          <div className="w-full">
+            <div className="w-full rounded-[20px] bg-white p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)]">
               <div className="text-[14px] font-medium mb-3 text-center">
                 Уточните, от какого лица пишем отзыв
               </div>
@@ -189,11 +186,11 @@ export function ExperiencePage() {
                 {GENDER_OPTIONS.map(option => (
                   <button
                     key={option.key}
-                    disabled={isSaving}
+                    disabled={genderMutation.isPending}
                     onClick={() => handleSelectGender(option.key)}
-                    className="flex-1 h-12 rounded-full bg-gray-100 text-[14px] flex items-center justify-center"
+                    className="flex-1 h-12 rounded-full bg-[#F2F2F2] text-[14px] flex items-center justify-center font-medium"
                   >
-                    {isSaving && selectedGender === option.key ? (
+                    {genderMutation.isPending && selectedGender === option.key ? (
                       <div className="w-5 h-5 animate-spin rounded-full border-2 border-black border-t-transparent" />
                     ) : (
                       option.label

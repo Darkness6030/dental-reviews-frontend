@@ -1,4 +1,14 @@
-export function PoetryIndex({ arrowAngle }: { arrowAngle: number }) {
+import { useEffect, useState } from "react"
+
+export function PoetryIndex({ arrowAngle, isGreenZone }: { arrowAngle: number, isGreenZone: boolean }) {
+  const [animate, setAnimate] = useState(false)
+
+  useEffect(() => {
+    setAnimate(true)
+    const timeout = setTimeout(() => setAnimate(false), 200)
+    return () => clearTimeout(timeout)
+  }, [isGreenZone])
+
   return (
     <div className="relative flex items-center gap-4 rounded-[16px] bg-white p-4 shadow-[4px_20px_40px_rgba(0,0,0,0.03)]">
       <div className="flex flex-col items-center justify-start w-[90px]">
@@ -14,7 +24,11 @@ export function PoetryIndex({ arrowAngle }: { arrowAngle: number }) {
             }}
           />
 
-          <div className="text-[28px] z-10">🚀</div>
+          <div
+            className={`text-[28px] z-10 transition-all duration-200 ${animate ? "scale-110" : "scale-100"}`}
+          >
+            {isGreenZone ? "❤️" : "🚀"}
+          </div>
 
           <div
             className="absolute flex items-center justify-center z-20"

@@ -1,31 +1,25 @@
-import { useEffect, useState } from "react"
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { Suspense } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { getAspects, setReviewAspects } from "../api"
 import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
-import type { Aspect } from "../types"
-import { loadReview } from "../utils/storage"
+import type { Aspect, Review } from "../types"
 
 type Context = {
+  currentReview: Review
   selectedAspectIds: number[]
   setSelectedAspectIds: (ids: number[]) => void
 }
 
-export function AspectsPage() {
-  const navigate = useNavigate()
-  const { selectedAspectIds, setSelectedAspectIds } =
-    useOutletContext<Context>()
+function AspectsList() {
+  const { selectedAspectIds, setSelectedAspectIds } = useOutletContext<Context>()
 
-  const [aspects, setAspects] = useState<Aspect[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
-
-  useEffect(() => {
-    getAspects()
-      .then(setAspects)
-      .finally(() => setIsLoading(false))
-  }, [])
+  const { data: aspects } = useSuspenseQuery<Aspect[]>({
+    queryKey: ["aspects"],
+    queryFn: getAspects,
+  })
 
   const toggleAspectId = (aspectId: number) => {
     setSelectedAspectIds(
@@ -35,17 +29,60 @@ export function AspectsPage() {
     )
   }
 
-  const handleNext = async () => {
-    if (isSaving) return
-    setIsSaving(true)
+  return (
+    <>
+      <div className="flex flex-wrap gap-[6px] drop-shadow-[0_0_4px_rgba(0,0,0,0.04)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]">
+        {aspects
+          .filter(aspect => aspect.is_enabled)
+          .map(aspect => {
+            const isSelected = selectedAspectIds.includes(aspect.id)
+            return (
+              <button
+                key={aspect.id}
+                onClick={() => toggleAspectId(aspect.id)}
+                className={`flex min-h-[56px] items-center justify-center rounded-[16px] px-4 text-[15px] font-medium leading-[18px] tracking-[-0.02em]
+                  ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"}`}
+              >
+                {aspect.name}
+              </button>
+            )
+          })}
+      </div>
 
-    try {
-      const review = await loadReview()
-      await setReviewAspects(review.id, selectedAspectIds)
+      {selectedAspectIds.length > 0 && (
+        <div className="mt-6">
+          <button
+            onClick={() => setSelectedAspectIds([])}
+            className="h-12 rounded-[16px] border border-[rgba(19,25,39,0.16)] px-4 text-[15px] font-medium tracking-[-0.02em] text-[#131927]"
+          >
+            Очистить все
+          </button>
+        </div>
+      )}
+    </>
+  )
+}
+
+export function AspectsPage() {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
+  const {
+    currentReview,
+    selectedAspectIds
+  } = useOutletContext<Context>()
+
+  const mutation = useMutation({
+    mutationFn: () => setReviewAspects(currentReview.id, selectedAspectIds),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
       navigate("/source")
-    } finally {
-      setIsSaving(false)
     }
+  })
+
+  const handleNext = () => {
+    if (mutation.isPending) return
+    mutation.mutate()
   }
 
   return (
@@ -66,40 +103,15 @@ export function AspectsPage() {
       </div>
 
       <div className="mt-4 w-full flex-1 overflow-y-auto px-4">
-        <div className="flex flex-wrap gap-[6px] drop-shadow-[0_0_4px_rgba(0,0,0,0.04)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]">
-          {isLoading ? (
+        <Suspense
+          fallback={
             <div className="flex min-h-[120px] w-full items-center justify-center">
               <Loader />
             </div>
-          ) : (
-            aspects
-              .filter(aspect => aspect.is_enabled)
-              .map(aspect => {
-                const isSelected = selectedAspectIds.includes(aspect.id)
-
-                return (
-                  <button
-                    key={aspect.id}
-                    onClick={() => toggleAspectId(aspect.id)}
-                    className={`flex min-h-[56px] items-center justify-center rounded-[16px] px-4 text-[15px] font-medium leading-[18px] tracking-[-0.02em] ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"}`}
-                  >
-                    {aspect.name}
-                  </button>
-                )
-              })
-          )}
-        </div>
-
-        {!isLoading && selectedAspectIds.length > 0 && (
-          <div className="mt-6">
-            <button
-              onClick={() => setSelectedAspectIds([])}
-              className="h-12 rounded-[16px] border border-[rgba(19,25,39,0.16)] px-4 text-[15px] font-medium tracking-[-0.02em] text-[#131927]"
-            >
-              Очистить все
-            </button>
-          </div>
-        )}
+          }
+        >
+          <AspectsList />
+        </Suspense>
       </div>
 
       <div className="sticky bottom-0 flex w-full items-center justify-between px-4 py-3">
@@ -111,11 +123,11 @@ export function AspectsPage() {
         </button>
 
         <button
-          disabled={selectedAspectIds.length === 0 || isSaving}
+          disabled={selectedAspectIds.length === 0 || mutation.isPending}
           onClick={handleNext}
           className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold tracking-[-0.02em] text-white shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)] disabled:opacity-30"
         >
-          {isSaving ? (
+          {mutation.isPending ? (
             <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             "Далее"

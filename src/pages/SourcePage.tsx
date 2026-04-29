@@ -1,43 +1,67 @@
-import { useEffect, useState } from "react"
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
+import { Suspense } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
 import { getSources, setReviewSource } from "../api"
 import { Loader } from "../components/Loader"
 import { StepProgress } from "../components/StepProgress"
 import ArrowBackIcon from "../icons/arrow_back.svg?react"
-import type { Source } from "../types"
-import { loadReview } from "../utils/storage"
+import type { Review, Source } from "../types"
 
 type Context = {
+  currentReview: Review
   selectedSourceId: number | null
   setSelectedSourceId: (id: number | null) => void
 }
 
+function SourceList() {
+  const { selectedSourceId, setSelectedSourceId } = useOutletContext<Context>()
+
+  const { data: sources } = useSuspenseQuery<Source[]>({
+    queryKey: ["sources"],
+    queryFn: getSources,
+  })
+
+  return (
+    <div className="flex flex-col gap-2 drop-shadow-[0_0_4px_rgba(0,0,0,0.04)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]">
+      {sources
+        .filter(source => source.is_enabled)
+        .map(source => {
+          const isSelected = selectedSourceId === source.id
+          return (
+            <button
+              key={source.id}
+              onClick={() => setSelectedSourceId(source.id)}
+              className={`flex h-14 w-full items-center justify-start rounded-[16px] px-5 text-[15px] font-medium leading-[18px] tracking-[-0.02em]
+                ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"}`}
+            >
+              {source.name}
+            </button>
+          )
+        })}
+    </div>
+  )
+}
+
 export function SourcePage() {
   const navigate = useNavigate()
-  const { selectedSourceId, setSelectedSourceId } =
-    useOutletContext<Context>()
+  const queryClient = useQueryClient()
 
-  const [sources, setSources] = useState<Source[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isSaving, setIsSaving] = useState(false)
+  const {
+    currentReview,
+    selectedSourceId
+  } = useOutletContext<Context>()
 
-  useEffect(() => {
-    getSources()
-      .then(setSources)
-      .finally(() => setIsLoading(false))
-  }, [])
-
-  const handleNext = async () => {
-    if (isSaving || selectedSourceId === null) return
-    setIsSaving(true)
-
-    try {
-      const review = await loadReview()
-      await setReviewSource(review.id, selectedSourceId)
+  const mutation = useMutation({
+    mutationFn: (sourceId: number) => setReviewSource(currentReview.id, sourceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries()
       navigate("/experience")
-    } finally {
-      setIsSaving(false)
     }
+  })
+
+  const handleNext = () => {
+    if (mutation.isPending || selectedSourceId === null) return
+    mutation.mutate(selectedSourceId)
   }
 
   return (
@@ -57,29 +81,15 @@ export function SourcePage() {
       </div>
 
       <div className="mt-4 w-full flex-1 overflow-y-auto px-4">
-        <div className="flex flex-col gap-2 drop-shadow-[0_0_4px_rgba(0,0,0,0.04)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]">
-          {isLoading ? (
+        <Suspense
+          fallback={
             <div className="flex min-h-[120px] w-full items-center justify-center">
               <Loader />
             </div>
-          ) : (
-            sources
-              .filter(source => source.is_enabled)
-              .map(source => {
-                const isSelected = selectedSourceId === source.id
-
-                return (
-                  <button
-                    key={source.id}
-                    onClick={() => setSelectedSourceId(source.id)}
-                    className={`flex h-14 w-full items-center justify-start rounded-[16px] px-5 text-[15px] font-medium leading-[18px] tracking-[-0.02em] ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"}`}
-                  >
-                    {source.name}
-                  </button>
-                )
-              })
-          )}
-        </div>
+          }
+        >
+          <SourceList />
+        </Suspense>
       </div>
 
       <div className="sticky bottom-0 flex w-full items-center justify-between px-4 py-3">
@@ -91,11 +101,11 @@ export function SourcePage() {
         </button>
 
         <button
-          disabled={selectedSourceId === null || isSaving}
+          disabled={selectedSourceId === null || mutation.isPending}
           onClick={handleNext}
           className="flex h-14 items-center justify-center rounded-full bg-gradient-to-r from-[#F39416] to-[#F33716] px-6 text-[16px] font-semibold tracking-[-0.02em] text-white shadow-[0_0_4px_rgba(44,30,8,0.08),0_8px_24px_rgba(44,30,8,0.08)] disabled:opacity-30"
         >
-          {isSaving ? (
+          {mutation.isPending ? (
             <div className="w-5 h-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
           ) : (
             "Далее"

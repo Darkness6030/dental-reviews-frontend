@@ -1,8 +1,42 @@
-import { useState } from "react"
-import { Outlet } from "react-router-dom"
-import type { Feedback } from "./types"
+import { useQuery } from "@tanstack/react-query"
+import { useEffect, useState } from "react"
+import { Outlet, useLocation, useNavigate } from "react-router-dom"
+import type { Feedback, Review } from "./types"
+import { loadReview } from "./utils/storage"
 
 export function App() {
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  const shouldLoadReview =
+    !location.pathname.startsWith("/feedback") &&
+    !location.pathname.startsWith("/complaint")
+
+  const {
+    data: currentReview,
+    isLoading: isReviewLoading,
+  } = useQuery<Review | null>({
+    queryKey: ["review"],
+    queryFn: loadReview,
+    enabled: shouldLoadReview,
+    retry: false,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: false,
+  })
+
+  const shouldRedirect =
+    shouldLoadReview &&
+    !isReviewLoading &&
+    !currentReview
+
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate("/", { replace: true })
+    }
+  }, [shouldRedirect, navigate])
+
   const [feedback, setFeedback] = useState<Feedback>(null)
   const [selectedReasonIds, setSelectedReasonIds] = useState<number[]>([])
   const [selectedDoctorIds, setSelectedDoctorIds] = useState<number[]>([])
@@ -20,9 +54,11 @@ export function App() {
 
   return (
     <div className="w-full min-h-[100dvh] bg-[#F5F5F5] flex justify-center">
-      <div className="w-full max-w-[393px] min-h-full">
+      <div className="w-full min-h-full">
         <Outlet
           context={{
+            currentReview,
+            isReviewLoading,
             feedback,
             setFeedback,
             selectedReasonIds,
@@ -50,7 +86,7 @@ export function App() {
             draftText,
             setDraftText,
             isCopied,
-            setIsCopied
+            setIsCopied,
           }}
         />
       </div>
