@@ -21,7 +21,6 @@ export function App() {
     enabled: shouldLoadReview,
     retry: false,
     staleTime: 0,
-    gcTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
   })

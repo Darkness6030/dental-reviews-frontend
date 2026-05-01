@@ -1,8 +1,8 @@
 type SwitchProps = {
-  checked: boolean;
-  handleChange: () => void;
-  disabled?: boolean;
-};
+  checked: boolean
+  handleChange: () => void
+  disabled?: boolean
+}
 
 export function Switch({
   checked,
@@ -29,5 +29,5 @@ export function Switch({
         `}
       />
     </button>
-  );
+  )
 }

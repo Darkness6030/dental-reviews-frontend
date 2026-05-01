@@ -5,7 +5,6 @@ import { addReviewPlatform, getPlatforms } from "../api"
 import { Loader } from "../components/Loader"
 import ArrowRightIcon from "../icons/arrow_right.svg?react"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
-import CopiedIcon from "../icons/copied.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
 import type { Platform, Review } from "../types"
@@ -86,9 +85,34 @@ export function PlatformsPage() {
   }, [currentReview])
 
   const handleCopyReview = async () => {
-    await navigator.clipboard.writeText(reviewText)
-    setIsCopied(true)
-  }
+    if (!reviewText) return;
+
+    let isSuccess = false;
+    if (navigator.clipboard && window.isSecureContext) {
+      try {
+        await navigator.clipboard.writeText(reviewText);
+        isSuccess = true;
+      } catch {
+        isSuccess = false;
+      }
+    }
+
+    if (!isSuccess) {
+      const textArea = document.createElement("textarea");
+      textArea.value = reviewText;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-9999px";
+      document.body.appendChild(textArea);
+      textArea.select();
+      isSuccess = document.execCommand("copy");
+      document.body.removeChild(textArea);
+    }
+
+    if (isSuccess) {
+      setIsCopied(true);
+      if (navigator.vibrate) navigator.vibrate(50);
+    }
+  };
 
   return (
     <div className="flex min-h-full flex-col items-center bg-[#F5F5F5]">
@@ -133,19 +157,12 @@ export function PlatformsPage() {
                 </p>
               </div>
 
-              <div className="flex w-12 flex-col shrink-0">
+              <div className="flex w-12 shrink-0">
                 <button
                   onClick={() => navigate("/review")}
-                  className="flex w-12 h-12 items-center justify-center rounded-t-[20px] border-b border-white bg-[#EEEEEE]"
+                  className="flex h-24 w-12 items-center justify-center rounded-[20px] bg-[#EEEEEE] active:opacity-70 transition-opacity"
                 >
-                  <PencilIcon className="w-[18px] h-[18px]" />
-                </button>
-
-                <button
-                  onClick={handleCopyReview}
-                  className="flex w-12 h-12 items-center justify-center rounded-b-[20px] bg-[#EEEEEE]"
-                >
-                  <CopyIcon className="w-[18px] h-[18px]" />
+                  <PencilIcon className="h-5 w-5 text-[#131927]" />
                 </button>
               </div>
             </>
@@ -153,19 +170,31 @@ export function PlatformsPage() {
         </div>
       </div>
 
-      <div className="mt-2 flex w-full items-center gap-2 px-4 justify-start h-6">
-        {isCopied ? (
-          <>
-            <CopiedIcon className="w-6 h-6" />
-            <span className="text-[13px] font-medium leading-[120%] tracking-[-0.02em] text-[#F39416]">
-              Отзыв скопирован
-            </span>
-          </>
-        ) : (
-          <span className="text-[13px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
-            Не забудьте скопировать готовый отзыв ⬆️
-          </span>
-        )}
+      <div className="mt-4 flex w-full px-4 shrink-0">
+        <button
+          onClick={handleCopyReview}
+          className={`flex h-[48px] w-full items-center justify-center gap-[10px] rounded-[16px] border px-4 py-2 transition-all
+            ${isCopied
+              ? "border-[#298A2C] bg-[#F1F8F1]"
+              : "border-[rgba(19,25,39,0.16)] bg-transparent active:bg-gray-100"
+            }`}
+        >
+          {isCopied ? (
+            <>
+              <CheckmarkIcon className="h-5 w-5 text-[#298A2C]" />
+              <span className="text-[15px] font-medium leading-[18px] tracking-[-0.02em] text-[#298A2C]">
+                Отзыв скопирован
+              </span>
+            </>
+          ) : (
+            <>
+              <CopyIcon className="h-5 w-5 text-[#131927]" />
+              <span className="text-[15px] font-medium leading-[18px] tracking-[-0.02em] text-[#131927]">
+                Скопировать отзыв
+              </span>
+            </>
+          )}
+        </button>
       </div>
 
       <div className="flex w-full flex-1 flex-col px-4 min-h-0">

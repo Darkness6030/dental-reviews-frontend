@@ -21,6 +21,9 @@ function AspectsList() {
     queryFn: getAspects,
   })
 
+  const enabledAspects = aspects.filter(aspect => aspect.is_enabled)
+  const isAllSelected = enabledAspects.length > 0 && selectedAspectIds.length === enabledAspects.length
+
   const toggleAspectId = (aspectId: number) => {
     setSelectedAspectIds(
       selectedAspectIds.includes(aspectId)
@@ -29,36 +32,40 @@ function AspectsList() {
     )
   }
 
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedAspectIds([])
+    } else {
+      setSelectedAspectIds(enabledAspects.map(aspect => aspect.id))
+    }
+  }
+
   return (
     <>
       <div className="flex flex-wrap gap-[6px] drop-shadow-[0_0_4px_rgba(0,0,0,0.04)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.06)]">
-        {aspects
-          .filter(aspect => aspect.is_enabled)
-          .map(aspect => {
-            const isSelected = selectedAspectIds.includes(aspect.id)
-            return (
-              <button
-                key={aspect.id}
-                onClick={() => toggleAspectId(aspect.id)}
-                className={`flex min-h-[56px] items-center justify-center rounded-[16px] px-4 text-[15px] font-medium leading-[18px] tracking-[-0.02em]
+        {enabledAspects.map(aspect => {
+          const isSelected = selectedAspectIds.includes(aspect.id)
+          return (
+            <button
+              key={aspect.id}
+              onClick={() => toggleAspectId(aspect.id)}
+              className={`flex min-h-[56px] items-center justify-center rounded-[16px] px-4 text-[15px] font-medium leading-[18px] tracking-[-0.02em]
                   ${isSelected ? "bg-[#131927] text-white" : "bg-white text-[#131927]"}`}
-              >
-                {aspect.name}
-              </button>
-            )
-          })}
+            >
+              {aspect.name}
+            </button>
+          )
+        })}
       </div>
 
-      {selectedAspectIds.length > 0 && (
-        <div className="mt-6">
-          <button
-            onClick={() => setSelectedAspectIds([])}
-            className="h-12 rounded-[16px] border border-[rgba(19,25,39,0.16)] px-4 text-[15px] font-medium tracking-[-0.02em] text-[#131927]"
-          >
-            Очистить все
-          </button>
-        </div>
-      )}
+      <div className="mt-6">
+        <button
+          onClick={handleSelectAll}
+          className="h-12 rounded-[16px] border border-[rgba(19,25,39,0.16)] px-4 text-[15px] font-medium tracking-[-0.02em] text-[#131927]"
+        >
+          {isAllSelected ? "Сбросить выбор" : "Выбрать все"}
+        </button>
+      </div>
     </>
   )
 }

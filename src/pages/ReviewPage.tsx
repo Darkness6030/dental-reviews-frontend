@@ -1,6 +1,6 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useRef, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { generateReviewText, updateReviewText } from "../api"
 import { Loader } from "../components/Loader"
 import { Switch } from "../components/Switch"
@@ -11,9 +11,9 @@ import PencilIcon from "../icons/pencil.svg?react"
 import type { Review, StylePreset } from "../types"
 
 const STYLE_PRESET_OPTIONS: { value: StylePreset; label: string }[] = [
-  { value: "basic", label: "🤝 Базовый" },
+  { value: "friendly", label: "🥰 Дружелюбный" },
   { value: "short", label: "🎯 Короткий" },
-  { value: "friendly", label: "🥰 Дружелюбный" }
+  { value: "business", label: "🤝 Деловой" }
 ]
 
 const getCacheKey = (stylePreset: StylePreset, useEmojis: boolean) => {
@@ -22,6 +22,7 @@ const getCacheKey = (stylePreset: StylePreset, useEmojis: boolean) => {
 
 type Context = {
   currentReview: Review
+  isReviewLoading: boolean
   reviewText: string
   setReviewText: (text: string) => void
   draftText: string
@@ -32,7 +33,9 @@ export function ReviewPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
+  const initializedRef = useRef(false);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null)
+
   const {
     currentReview,
     reviewText,
@@ -48,22 +51,25 @@ export function ReviewPage() {
 
   const [generationsLeft, setGenerationsLeft] = useState(0)
   const [generationsLimit, setGenerationsLimit] = useState(0)
-
-  const [stylePreset, setStylePreset] = useState<StylePreset>("basic")
   const [styleCache, setStyleCache] = useState<Record<string, string>>({})
+
+  const [stylePreset, setStylePreset] = useState<StylePreset>(() => {
+    const randomIndex = Math.floor(Math.random() * STYLE_PRESET_OPTIONS.length);
+    return STYLE_PRESET_OPTIONS[randomIndex].value;
+  });
 
   const generateMutation = useMutation({
     mutationFn: () => generateReviewText(currentReview.id, stylePreset, useEmojis),
-    onSuccess: (data) => {
-      const newText = data.review_text ?? ""
+    onSuccess: review => {
+      const newText = review.review_text ?? ""
       setReviewText(newText)
       setDraftText(newText)
 
       const cacheKey = getCacheKey(stylePreset, useEmojis)
-      setStyleCache(prev => ({ ...prev, [cacheKey]: newText }))
+      setStyleCache(value => ({ ...value, [cacheKey]: newText }))
 
-      setGenerationsLeft(data.generations_limit - data.generations_spent)
-      setGenerationsLimit(data.generations_limit)
+      setGenerationsLeft(review.generations_limit - review.generations_spent)
+      setGenerationsLimit(review.generations_limit)
 
       setIsEditing(false)
       queryClient.invalidateQueries()
@@ -72,13 +78,13 @@ export function ReviewPage() {
 
   const saveEditMutation = useMutation({
     mutationFn: () => updateReviewText(currentReview.id, draftText),
-    onSuccess: (updatedReview) => {
-      const newText = updatedReview.review_text ?? ""
+    onSuccess: review => {
+      const newText = review.review_text ?? ""
       setReviewText(newText)
       setDraftText(newText)
 
       const cacheKey = getCacheKey(stylePreset, useEmojis)
-      setStyleCache(prev => ({ ...prev, [cacheKey]: newText }))
+      setStyleCache(value => ({ ...value, [cacheKey]: newText }))
 
       setIsEditing(false)
       queryClient.invalidateQueries()
@@ -86,7 +92,7 @@ export function ReviewPage() {
   })
 
   useEffect(() => {
-    if (!currentReview) return
+    if (initializedRef.current || !currentReview) return;
 
     const initialText = currentReview.review_text ?? ""
     setReviewText(initialText)
@@ -96,14 +102,21 @@ export function ReviewPage() {
     setGenerationsLimit(currentReview.generations_limit)
 
     if (initialText) {
-      setStyleCache(prev => ({ ...prev, [getCacheKey(stylePreset, useEmojis)]: initialText }))
+      if (currentReview.last_style_preset) {
+        setStylePreset(currentReview.last_style_preset)
+      }
+
+      const cacheKey = getCacheKey(currentReview.last_style_preset || stylePreset, useEmojis)
+      setStyleCache(value => ({ ...value, [cacheKey]: initialText }))
     } else {
       generateMutation.mutate()
     }
+
+    initializedRef.current = true;
   }, [currentReview])
 
   useEffect(() => {
-    if (!currentReview) return
+    if (!initializedRef.current || !currentReview) return;
 
     const cachedText = styleCache[getCacheKey(stylePreset, useEmojis)]
     if (cachedText) {
@@ -113,9 +126,7 @@ export function ReviewPage() {
       return
     }
 
-    if (currentReview.id) {
-      generateMutation.mutate()
-    }
+    generateMutation.mutate()
   }, [stylePreset, useEmojis])
 
   useEffect(() => {
@@ -129,6 +140,7 @@ export function ReviewPage() {
 
     handleScroll()
     element.addEventListener("scroll", handleScroll)
+
     const observer = new ResizeObserver(handleScroll)
     observer.observe(element)
 
@@ -185,7 +197,10 @@ export function ReviewPage() {
         >
           {!isEditing && (
             <>
-              <div className="mb-2 flex gap-2">
+              <span className="mb-2 text-[13px] font-medium text-[#131927] opacity-60">
+                Выберите стиль отзыва
+              </span>
+              <div className="mb-2 flex gap-1">
                 {STYLE_PRESET_OPTIONS.map(option => {
                   const isDisabled = generateMutation.isPending || !generationsLeft
                   return (
@@ -193,7 +208,7 @@ export function ReviewPage() {
                       key={option.value}
                       onClick={() => setStylePreset(option.value)}
                       disabled={isDisabled}
-                      className={`flex-1 whitespace-nowrap rounded-full px-2 py-1.5 text-center text-[12px]
+                      className={`flex-1 whitespace-nowrap rounded-full px-1.5 py-1.5 text-center text-[11px]
                         ${stylePreset === option.value
                           ? "bg-[#131927] text-white"
                           : "bg-[#F0F0F0]"
@@ -206,13 +221,13 @@ export function ReviewPage() {
               </div>
 
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[13px] text-[#131927] opacity-60">
+                <span className="text-[13px] font-medium text-[#131927] opacity-60">
                   Использовать эмодзи
                 </span>
 
                 <Switch
                   checked={useEmojis}
-                  handleChange={() => setUseEmojis(prev => !prev)}
+                  handleChange={() => setUseEmojis(value => !value)}
                   disabled={generateMutation.isPending || !generationsLeft}
                 />
               </div>

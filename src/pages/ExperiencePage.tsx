@@ -88,7 +88,7 @@ export function ExperiencePage() {
   const handleGenerate = () => {
     if (experienceMutation.isPending || genderMutation.isPending) return
 
-    if (experienceText.trim().length < 100 && !currentReview.review_text) {
+    if (!currentReview.selected_gender) {
       setIsSelectingGender(true)
       return
     }
