@@ -44,6 +44,13 @@ export type Reward = {
     image_url?: string
 }
 
+export type Manager = {
+    id: number
+    name: string
+    is_enabled: boolean
+    avatar_url?: string
+}
+
 export type Platform = {
     id: number
     name: string
@@ -60,6 +67,7 @@ export type Reason = {
 
 export type Review = {
     id: number
+    created_at: string
     contact_name?: string
     contact_phone?: string
     selected_gender?: string
@@ -68,6 +76,7 @@ export type Review = {
     review_text?: string
     generations_spent: number
     generations_limit: number
+    is_published: boolean
     target_doctor?: Doctor
     selected_doctors: Doctor[]
     selected_services: Service[]

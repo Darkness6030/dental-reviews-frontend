@@ -3,6 +3,7 @@ import qs from "qs"
 import type {
   Aspect,
   Doctor,
+  Manager,
   Platform,
   Reason,
   Review,
@@ -56,6 +57,11 @@ export const getSources = async (): Promise<Source[]> => {
 
 export const getRewards = async (): Promise<Reward[]> => {
   const { data } = await client.get("/rewards")
+  return data
+}
+
+export const getManagers = async (): Promise<Manager[]> => {
+  const { data } = await client.get("/managers")
   return data
 }
 
@@ -186,6 +192,16 @@ export const setReviewContacts = async (
   const { data } = await client.post(`/reviews/${reviewId}/contacts`, {
     contact_name: contactName,
     contact_phone: contactPhone,
+  })
+  return data
+}
+
+export const setReviewManager = async (
+  reviewId: number,
+  managerId: number
+): Promise<Review> => {
+  const { data } = await client.post(`/reviews/${reviewId}/manager`, {
+    manager_id: managerId,
   })
   return data
 }

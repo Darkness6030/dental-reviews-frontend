@@ -1,12 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useNavigate, useOutletContext } from "react-router-dom"
-import { setReviewContacts } from "../api"
+import { getManagers, setReviewContacts, setReviewManager } from "../api"
 import { Loader } from "../components/Loader"
 import CheckmarkIcon from "../icons/checkmark.svg?react"
 import CopyIcon from "../icons/copy.svg?react"
 import PencilIcon from "../icons/pencil.svg?react"
-import type { Review, Reward } from "../types"
+import type { Manager, Review, Reward } from "../types"
 import { formatPhone } from "../utils/phone"
 
 type Context = {
@@ -35,12 +35,18 @@ export function ContactsPage() {
     setIsCopied
   } = useOutletContext<Context>()
 
+  const { data: managers } = useSuspenseQuery<Manager[]>({
+    queryKey: ["managers"],
+    queryFn: getManagers,
+  })
+
   const [reviewText, setReviewText] = useState("")
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null)
 
   const [isEditingName, setIsEditingName] = useState(true)
   const [isEditingPhone, setIsEditingPhone] = useState(true)
   const [isPhoneVisible, setIsPhoneVisible] = useState(false)
+  const [isSelectingManager, setIsSelectingManager] = useState(false)
 
   const isPhoneCompleted = /^\+7 \d{3} \d{3} \d{2} \d{2}$/.test(contactPhone)
 
@@ -63,7 +69,10 @@ export function ContactsPage() {
   }, [currentReview])
 
   const mutation = useMutation({
-    mutationFn: () => setReviewContacts(currentReview.id, contactName, contactPhone),
+    mutationFn: (managerId?: number) => Promise.all([
+      setReviewContacts(currentReview.id, contactName, contactPhone),
+      managerId ? setReviewManager(currentReview.id, managerId) : Promise.resolve()
+    ]),
     onSuccess: () => {
       queryClient.invalidateQueries()
       navigate("/platforms")
@@ -102,12 +111,15 @@ export function ContactsPage() {
 
   const handleNext = () => {
     if (mutation.isPending || !isPhoneCompleted) return
-    mutation.mutate()
+    setIsSelectingManager(true)
   }
 
   const handleSkip = () => {
-    queryClient.invalidateQueries()
-    navigate("/platforms")
+    setIsSelectingManager(true)
+  }
+
+  const handleSelectManager = (managerId?: number) => {
+    mutation.mutate(managerId)
   }
 
   return (
@@ -345,6 +357,59 @@ export function ContactsPage() {
           )}
         </button>
       </div>
+
+      {isSelectingManager && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/20 px-4 pb-3">
+          <div className="w-full max-w-md">
+            <div className="w-full rounded-[28px] bg-white p-4 shadow-[0_-4px_24px_rgba(0,0,0,0.12)]">
+              <div className="mb-3 flex flex-col gap-0.5 px-1">
+                <h3 className="text-[18px] font-semibold leading-[110%] tracking-[-0.02em] text-[#131927]">
+                  Кто помог вам с отзывом?
+                </h3>
+                <p className="text-[12px] leading-[120%] tracking-[-0.02em] text-[#131927] opacity-40">
+                  Выберите администратора
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-2 max-h-[280px] overflow-y-auto pr-1">
+                {managers.map(manager => (
+                  <button
+                    key={manager.id}
+                    disabled={mutation.isPending}
+                    onClick={() => handleSelectManager(manager.id)}
+                    className="flex h-[52px] w-full items-center gap-3 rounded-[16px] bg-[#F8F8F8] p-1 pr-4 active:bg-[#EEEEEE] transition-colors"
+                  >
+                    <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#F2F2F2]">
+                      {manager.avatar_url ? (
+                        <img
+                          src={manager.avatar_url}
+                          alt={manager.name}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-[#DAE6DA] text-[15px] font-semibold text-[#298A2C]">
+                          {manager.name.charAt(0)}
+                        </div>
+                      )}
+                    </div>
+                    <span className="flex-1 text-left text-[15px] font-medium tracking-[-0.02em] text-[#131927]">
+                      {manager.name}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <button
+                disabled={mutation.isPending}
+                onClick={() => handleSelectManager()}
+                className="mt-2 flex h-[40px] w-full items-center justify-center text-[13px] font-medium text-[#131927] opacity-40 active:opacity-60"
+              >
+                Пропустить этот шаг
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
